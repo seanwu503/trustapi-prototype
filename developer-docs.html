@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustAPI - Developer Integration</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-code: #1e293b;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --success: #22c55e;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 32px 24px;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-section {
+            margin-bottom: 32px;
+        }
+
+        .nav-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 10px 16px;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+        }
+
+        .nav-link.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 60px 80px;
+            max-width: 1200px;
+        }
+
+        .header {
+            margin-bottom: 48px;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .lead {
+            font-size: 20px;
+            color: var(--text-secondary);
+            max-width: 700px;
+        }
+
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-top: 64px;
+            margin-bottom: 24px;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 40px;
+            margin-bottom: 16px;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        .quick-start {
+            background: linear-gradient(135deg, #eef2ff, #f3e8ff);
+            border: 2px solid #c7d2fe;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 48px;
+        }
+
+        .quick-start-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #4338ca;
+        }
+
+        .install-command {
+            background: var(--bg-code);
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .code-block {
+            background: var(--bg-code);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 24px 0;
+        }
+
+        .code-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .code-lang {
+            color: #94a3b8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        pre {
+            margin: 0;
+            padding: 24px;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #e2e8f0;
+        }
+
+        .keyword { color: #c792ea; }
+        .string { color: #c3e88d; }
+        .function { color: #82aaff; }
+        .comment { color: #676e95; font-style: italic; }
+        .property { color: #f78c6c; }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin: 32px 0;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.15);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .api-table {
+            width: 100%;
+            margin: 24px 0;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .api-table th {
+            background: var(--bg-code);
+            color: white;
+            padding: 16px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .api-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .api-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .param-name {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .param-type {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 4px 8px;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+            border-radius: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-required {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-optional {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .response-example {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--success);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .response-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .note {
+            background: #fff7ed;
+            border-left: 4px solid #f59e0b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+
+        .note-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .note-text {
+            color: #78350f;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 40px 24px;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">TrustAPI</div>
+        
+        <nav class="nav-section">
+            <div class="nav-title">Getting Started</div>
+            <a href="#" class="nav-link active">Quick Start</a>
+            <a href="#" class="nav-link">Authentication</a>
+            <a href="#" class="nav-link">SDKs</a>
+        </nav>
+
+        <nav class="nav-section">
+            <div class="nav-title">API Reference</div>
+            <a href="#" class="nav-link">Verify User</a>
+            <a href="#" class="nav-link">Generate Proof</a>
+            <a href="#" class="nav-link">Revoke Proof</a>
+            <a href="#" class="nav-link">Webhooks</a>
+        </nav>
+
+        <nav class="nav-section">
+            <div class="nav-title">Resources</div>
+            <a href="#" class="nav-link">Examples</a>
+            <a href="#" class="nav-link">Rate Limits</a>
+            <a href="#" class="nav-link">Errors</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Developer Documentation</h1>
+            <p class="lead">
+                Integrate TrustAPI in minutes. Verify users are real, trustworthy humans without seeing their private data.
+            </p>
+        </div>
+
+        <div class="quick-start">
+            <div class="quick-start-title">⚡ Quick Start</div>
+            <p style="margin-bottom: 20px; color: #4338ca;">Install the SDK and verify your first user in under 5 minutes</p>
+            
+            <div class="install-command">
+                <code>npm install @trustapi/sdk</code>
+                <button class="copy-btn">Copy</button>
+            </div>
+        </div>
+
+        <h2>Authentication</h2>
+        <p>Get your API key from the dashboard and include it in your requests:</p>
+
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">JavaScript</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <pre><code><span class="keyword">import</span> { TrustAPI } <span class="keyword">from</span> <span class="string">'@trustapi/sdk'</span>;
+
+<span class="keyword">const</span> client = <span class="keyword">new</span> <span class="function">TrustAPI</span>({
+  <span class="property">apiKey</span>: process.env.<span class="property">TRUST_API_KEY</span>
+});</code></pre>
+        </div>
+
+        <h2>Core Features</h2>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-title">Verify Users</div>
+                <div class="feature-desc">
+                    Check if a user meets your trust requirements in a single API call
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Lightning Fast</div>
+                <div class="feature-desc">
+                    Average response time under 50ms for instant verification
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Privacy First</div>
+                <div class="feature-desc">
+                    Zero-knowledge proofs mean you never see user's private data
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <div class="feature-title">Chain Agnostic</div>
+                <div class="feature-desc">
+                    Works across all major blockchains and web2 platforms
+                </div>
+            </div>
+        </div>
+
+        <h2>Verify User Endpoint</h2>
+        <p>The primary endpoint to check if a user meets your trust requirements.</p>
+
+        <h3>Request</h3>
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">POST /v1/verify</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <pre><code><span class="keyword">const</span> result = <span class="keyword">await</span> client.<span class="function">verify</span>({
+  <span class="property">wallet</span>: <span class="string">"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"</span>,
+  <span class="property">minimumTier</span>: <span class="string">"silver"</span>,
+  <span class="property">checks</span>: [<span class="string">"human"</span>, <span class="string">"trust"</span>]
+});
+
+<span class="comment">// Result</span>
+{
+  <span class="property">verified</span>: <span class="keyword">true</span>,
+  <span class="property">humanLikelihood</span>: <span class="string">"high"</span>,
+  <span class="property">trustTier</span>: <span class="string">"gold"</span>,
+  <span class="property">confidence</span>: <span class="property">0.92</span>,
+  <span class="property">proofExpires</span>: <span class="string">"2026-03-04T12:00:00Z"</span>
+}</code></pre>
+        </div>
+
+        <h3>Parameters</h3>
+        <table class="api-table">
+            <thead>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="param-name">wallet</span></td>
+                    <td><span class="param-type">string</span></td>
+                    <td><span class="badge badge-required">Required</span></td>
+                    <td>The wallet address or user identifier to verify</td>
+                </tr>
+                <tr>
+                    <td><span class="param-name">minimumTier</span></td>
+                    <td><span class="param-type">enum</span></td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Minimum trust tier: "bronze", "silver", or "gold"</td>
+                </tr>
+                <tr>
+                    <td><span class="param-name">checks</span></td>
+                    <td><span class="param-type">array</span></td>
+                    <td><span class="badge badge-optional">Optional</span></td>
+                    <td>Specific checks to run: ["human", "trust", "age"]</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Response</h3>
+        <div class="response-example">
+            <div class="response-title">✓ Successful Response</div>
+            <div class="code-block" style="margin: 0;">
+                <pre style="padding: 16px;"><code>{
+  <span class="property">"verified"</span>: <span class="keyword">true</span>,
+  <span class="property">"humanLikelihood"</span>: <span class="string">"high"</span>,
+  <span class="property">"trustTier"</span>: <span class="string">"gold"</span>,
+  <span class="property">"confidence"</span>: <span class="property">0.92</span>,
+  <span class="property">"accountAge"</span>: <span class="property">847</span>,
+  <span class="property">"activityScore"</span>: <span class="property">8.7</span>,
+  <span class="property">"proofId"</span>: <span class="string">"0xA7F9...3C2E"</span>,
+  <span class="property">"proofExpires"</span>: <span class="string">"2026-03-04T12:00:00Z"</span>
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="note">
+            <div class="note-title">
+                <span>⚠️</span>
+                <span>Important Note</span>
+            </div>
+            <div class="note-text">
+                Proofs are time-bound and expire after 30 days. Users can revoke their proofs at any time. Always check the <code>proofExpires</code> field and implement webhook listeners for revocations.
+            </div>
+        </div>
+
+        <h2>SDK Examples</h2>
+
+        <h3>React Integration</h3>
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">React</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <pre><code><span class="keyword">import</span> { useTrustAPI } <span class="keyword">from</span> <span class="string">'@trustapi/react'</span>;
+
+<span class="keyword">function</span> <span class="function">LoginButton</span>() {
+  <span class="keyword">const</span> { verify, loading, verified } = <span class="function">useTrustAPI</span>();
+
+  <span class="keyword">const</span> handleLogin = <span class="keyword">async</span> () => {
+    <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="function">verify</span>({
+      <span class="property">minimumTier</span>: <span class="string">'silver'</span>
+    });
+
+    <span class="keyword">if</span> (result.verified) {
+      <span class="comment">// Proceed with login</span>
+      <span class="function">handleSuccessfulAuth</span>(result);
+    }
+  };
+
+  <span class="keyword">return</span> (
+    &lt;<span class="function">button</span> onClick={handleLogin} disabled={loading}&gt;
+      {verified ? <span class="string">'Verified ✓'</span> : <span class="string">'Verify Identity'</span>}
+    &lt;/<span class="function">button</span>&gt;
+  );
+}</code></pre>
+        </div>
+
+        <h3>Node.js Backend</h3>
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-lang">Node.js</span>
+                <button class="copy-btn">Copy</button>
+            </div>
+            <pre><code><span class="keyword">const</span> { TrustAPI } = <span class="keyword">require</span>(<span class="string">'@trustapi/sdk'</span>);
+
+<span class="keyword">const</span> client = <span class="keyword">new</span> <span class="function">TrustAPI</span>({
+  <span class="property">apiKey</span>: process.env.<span class="property">TRUST_API_KEY</span>
+});
+
+app.<span class="function">post</span>(<span class="string">'/api/signup'</span>, <span class="keyword">async</span> (req, res) => {
+  <span class="keyword">const</span> { wallet } = req.body;
+
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> result = <span class="keyword">await</span> client.<span class="function">verify</span>({
+      wallet,
+      <span class="property">minimumTier</span>: <span class="string">'silver'</span>,
+      <span class="property">checks</span>: [<span class="string">'human'</span>, <span class="string">'trust'</span>]
+    });
+
+    <span class="keyword">if</span> (!result.verified) {
+      <span class="keyword">return</span> res.<span class="function">status</span>(<span class="property">403</span>).<span class="function">json</span>({
+        <span class="property">error</span>: <span class="string">'User does not meet trust requirements'</span>
+      });
+    }
+
+    <span class="comment">// Create user account</span>
+    <span class="keyword">const</span> user = <span class="keyword">await</span> <span class="function">createUser</span>({ wallet, trustTier: result.trustTier });
+    res.<span class="function">json</span>({ success: <span class="keyword">true</span>, user });
+
+  } <span class="keyword">catch</span> (error) {
+    res.<span class="function">status</span>(<span class="property">500</span>).<span class="function">json</span>({ <span class="property">error</span>: error.message });
+  }
+});</code></pre>
+        </div>
+
+        <h2>Rate Limits</h2>
+        <p>API requests are rate limited to ensure service quality:</p>
+        
+        <table class="api-table">
+            <thead>
+                <tr>
+                    <th>Tier</th>
+                    <th>Requests/Second</th>
+                    <th>Requests/Month</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Free</strong></td>
+                    <td>10</td>
+                    <td>10,000</td>
+                    <td>$0</td>
+                </tr>
+                <tr>
+                    <td><strong>Starter</strong></td>
+                    <td>50</td>
+                    <td>100,000</td>
+                    <td>$99/mo</td>
+                </tr>
+                <tr>
+                    <td><strong>Pro</strong></td>
+                    <td>200</td>
+                    <td>1,000,000</td>
+                    <td>$499/mo</td>
+                </tr>
+                <tr>
+                    <td><strong>Enterprise</strong></td>
+                    <td>Custom</td>
+                    <td>Unlimited</td>
+                    <td>Contact us</td>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

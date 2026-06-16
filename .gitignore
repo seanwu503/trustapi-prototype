@@ -1,0 +1,15 @@
+# Dependencies
+Trust_API/node_modules/
+
+# Environment / secrets
+.env
+.env.local
+Trust_API/.env
+Trust_API/.env.local
+
+# macOS files
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustAPI - Generate Your Proof</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Cabinet+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #fafbfc;
+            --bg-card: #ffffff;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent: #0ea5e9;
+            --accent-dark: #0284c7;
+            --success: #10b981;
+            --border: #e2e8f0;
+            --shadow: rgba(15, 23, 42, 0.08);
+        }
+
+        body {
+            font-family: 'Cabinet Grotesk', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 80px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .logo-container {
+            margin-bottom: 24px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 8px 32px rgba(14, 165, 233, 0.25);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.03em;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 0 1px 3px var(--shadow);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 48px;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: var(--border);
+            z-index: 0;
+        }
+
+        .progress-line {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            height: 2px;
+            background: var(--accent);
+            z-index: 1;
+            transition: width 0.5s ease;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+        }
+
+        .step.completed .step-circle {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: var(--text-primary);
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .wallet-connect {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .wallet-connect:hover {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        }
+
+        .wallet-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .wallet-status {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .wallet-address {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text-secondary);
+            background: rgba(15, 23, 42, 0.05);
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 12px;
+        }
+
+        .connect-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 16px;
+        }
+
+        .connect-button:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(14, 165, 233, 0.3);
+        }
+
+        .wallet-form {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .wallet-form label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+        }
+
+        .wallet-input-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .wallet-input-row .connect-button {
+            margin-top: 0;
+            white-space: nowrap;
+        }
+
+        .wallet-input {
+            flex: 1;
+            min-width: 0;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+            background: white;
+        }
+
+        .wallet-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+        }
+
+        .api-result {
+            display: none;
+            margin-top: 18px;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .api-result.visible {
+            display: block;
+        }
+
+        .api-result.error {
+            background: #7f1d1d;
+            color: #fee2e2;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .analysis-item {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .analysis-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .analysis-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(14, 165, 233, 0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border: 2px solid #10b981;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            color: #065f46;
+        }
+
+        .result-description {
+            color: #047857;
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+
+        .proof-card {
+            background: white;
+            border: 1px solid #10b981;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+            text-align: left;
+        }
+
+        .proof-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .proof-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .proof-badge {
+            padding: 6px 12px;
+            background: #10b981;
+            color: white;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .proof-details {
+            display: grid;
+            gap: 12px;
+        }
+
+        .proof-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+
+        .proof-label {
+            color: var(--text-secondary);
+        }
+
+        .proof-value {
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f8fafc;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .info-title {
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e40af;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-text {
+            font-size: 14px;
+            color: #1e3a8a;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 32px 24px;
+            }
+
+            h1 {
+                font-size: 36px;
+            }
+
+            .progress-steps {
+                flex-wrap: wrap;
+                gap: 24px;
+            }
+
+            .wallet-input-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo-icon">🛡️</div>
+            </div>
+            <h1>Generate Your Proof</h1>
+            <p class="subtitle">
+                Prove you're a trustworthy human once, use it everywhere
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="progress-steps">
+                <div class="progress-line" style="width: 66%;"></div>
+                <div class="step completed">
+                    <div class="step-circle">✓</div>
+                    <div class="step-label">Connect</div>
+                </div>
+                <div class="step completed">
+                    <div class="step-circle">✓</div>
+                    <div class="step-label">Analyze</div>
+                </div>
+                <div class="step active">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Generate</div>
+                </div>
+            </div>
+
+            <div class="wallet-form">
+                <label for="walletInput">Wallet address</label>
+                <div class="wallet-input-row">
+                    <input
+                        class="wallet-input"
+                        id="walletInput"
+                        name="wallet"
+                        type="text"
+                        placeholder="0x123"
+                        autocomplete="off"
+                    >
+                    <button class="connect-button" id="checkWalletButton" type="button">Check Wallet</button>
+                </div>
+                <pre class="api-result" id="apiResult"></pre>
+            </div>
+
+            <div class="result-card">
+                <div class="result-icon">✨</div>
+                <div class="result-title">Proof Generated Successfully!</div>
+                <div class="result-description">
+                    Your reputation proof is ready to use across platforms
+                </div>
+
+                <div class="proof-card">
+                    <div class="proof-header">
+                        <div class="proof-title">Your Trust Proof</div>
+                        <div class="proof-badge">GOLD TIER</div>
+                    </div>
+
+                    <div class="proof-details">
+                        <div class="proof-row">
+                            <span class="proof-label">Human Likelihood</span>
+                            <span class="proof-value" style="color: #10b981;">High (92%)</span>
+                        </div>
+                        <div class="proof-row">
+                            <span class="proof-label">Trust Tier</span>
+                            <span class="proof-value">Gold</span>
+                        </div>
+                        <div class="proof-row">
+                            <span class="proof-label">Proof ID</span>
+                            <span class="proof-value">0xA7F9...3C2E</span>
+                        </div>
+                        <div class="proof-row">
+                            <span class="proof-label">Issued</span>
+                            <span class="proof-value">Feb 02, 2026</span>
+                        </div>
+                        <div class="proof-row">
+                            <span class="proof-label">Valid Until</span>
+                            <span class="proof-value">Mar 04, 2026</span>
+                        </div>
+                        <div class="proof-row">
+                            <span class="proof-label">Revocable</span>
+                            <span class="proof-value">Yes</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-primary">Download Proof</button>
+                    <button class="btn btn-secondary">Share Link</button>
+                </div>
+
+                <div class="info-box">
+                    <div class="info-title">
+                        <span>ℹ️</span>
+                        <span>How to use your proof</span>
+                    </div>
+                    <div class="info-text">
+                        Present this proof to any platform that integrates TrustAPI. Your private data stays private — platforms only see that you meet their trust requirements. The proof automatically expires in 30 days.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">Your Reputation Analysis</div>
+
+            <div class="analysis-grid">
+                <div class="analysis-item">
+                    <div class="analysis-label">Account Age</div>
+                    <div class="analysis-value">847 days</div>
+                </div>
+                <div class="analysis-item">
+                    <div class="analysis-label">Activity Score</div>
+                    <div class="analysis-value" style="color: #10b981;">8.7/10</div>
+                </div>
+                <div class="analysis-item">
+                    <div class="analysis-label">Attestations</div>
+                    <div class="analysis-value">12 verified</div>
+                </div>
+                <div class="analysis-item">
+                    <div class="analysis-label">Sybil Risk</div>
+                    <div class="analysis-value" style="color: #10b981;">Very Low</div>
+                </div>
+            </div>
+
+            <div style="padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border);">
+                <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                    <strong>Signals Analyzed:</strong>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <span style="padding: 6px 12px; background: white; border-radius: 6px; font-size: 13px; border: 1px solid var(--border);">
+                        ✓ Wallet Age
+                    </span>
+                    <span style="padding: 6px 12px; background: white; border-radius: 6px; font-size: 13px; border: 1px solid var(--border);">
+                        ✓ Transaction Regularity
+                    </span>
+                    <span style="padding: 6px 12px; background: white; border-radius: 6px; font-size: 13px; border: 1px solid var(--border);">
+                        ✓ Stablecoin Usage
+                    </span>
+                    <span style="padding: 6px 12px; background: white; border-radius: 6px; font-size: 13px; border: 1px solid var(--border);">
+                        ✓ Prior Attestations
+                    </span>
+                    <span style="padding: 6px 12px; background: white; border-radius: 6px; font-size: 13px; border: 1px solid var(--border);">
+                        ✓ Behavior Patterns
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const walletInput = document.getElementById('walletInput');
+        const checkWalletButton = document.getElementById('checkWalletButton');
+        const apiResult = document.getElementById('apiResult');
+
+        checkWalletButton.addEventListener('click', async () => {
+            const walletInputValue = walletInput.value.trim();
+
+            apiResult.classList.remove('error');
+            apiResult.classList.add('visible');
+            apiResult.textContent = 'Checking wallet...';
+            checkWalletButton.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8000/check_wallet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        wallet: walletInputValue
+                    })
+                });
+
+                const data = await response.json();
+                apiResult.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                apiResult.classList.add('error');
+                apiResult.textContent = 'Wallet check failed. Make sure the Node.js API server is running on localhost:8000.';
+                console.error('Wallet check failed:', error);
+            } finally {
+                checkWalletButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
