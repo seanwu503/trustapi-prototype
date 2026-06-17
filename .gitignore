@@ -13,3 +13,8 @@ Trust_API/.env.local
 # Logs
 *.log
 npm-debug.log*
+
+# Markdown docs except README files
+*.md
+!README.md
+!**/README.md
