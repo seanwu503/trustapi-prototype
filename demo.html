@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustAPI Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 32px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: #64748b;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #0ea5e9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0284c7;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        pre {
+            margin-top: 24px;
+            padding: 16px;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .error {
+            margin-top: 16px;
+            color: #dc2626;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>TrustAPI Demo</h1>
+        <p>Enter a wallet address and check the hardcoded trust response from the local server.</p>
+
+        <label for="wallet">Wallet address</label>
+        <input
+            id="wallet"
+            type="text"
+            placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"
+            value="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"
+        >
+
+        <button id="checkBtn">Check Wallet</button>
+
+        <div id="error" class="error" hidden></div>
+        <pre id="result" hidden></pre>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/check_wallet';
+        const walletInput = document.getElementById('wallet');
+        const checkBtn = document.getElementById('checkBtn');
+        const resultEl = document.getElementById('result');
+        const errorEl = document.getElementById('error');
+
+        checkBtn.addEventListener('click', async () => {
+            const wallet = walletInput.value.trim();
+            resultEl.hidden = true;
+            errorEl.hidden = true;
+            checkBtn.disabled = true;
+            checkBtn.textContent = 'Checking...';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Request failed');
+                }
+
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                resultEl.hidden = false;
+            } catch (error) {
+                errorEl.textContent = error.message + ' — is the server running? (npm start in Trust_API/)';
+                errorEl.hidden = false;
+            } finally {
+                checkBtn.disabled = false;
+                checkBtn.textContent = 'Check Wallet';
+            }
+        });
+    </script>
+</body>
+</html>

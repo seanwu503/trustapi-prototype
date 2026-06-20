@@ -1,20 +1,12 @@
 # Dependencies
 Trust_API/node_modules/
 
-# Environment / secrets
+# Environment
 .env
 .env.local
-Trust_API/.env
-Trust_API/.env.local
 
-# macOS files
+# macOS
 .DS_Store
 
 # Logs
 *.log
-npm-debug.log*
-
-# Markdown docs except README files
-*.md
-!README.md
-!**/README.md
