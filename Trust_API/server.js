@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const { getWalletInfo } = require('./alchemyClient');
+const { trySaveWalletSnapshot } = require('./db/walletRepository');
 
 process.loadEnvFile(path.join(__dirname, '.env'));
 
@@ -26,16 +27,18 @@ app.post('/check_wallet', (req, res) => {
 
 app.post('/get_wallet_info', async (req, res) => {
     try {
-        console.log('get_wallet_info request received:', req.body.wallet);
         const result = await getWalletInfo(req.body.wallet);
-        res.json(result);
+        const saved = await trySaveWalletSnapshot(result);
+        res.json({ ...result, ...saved });
     } catch (error) {
-        if (error.statusCode) {
-            return res.status(error.statusCode).json({ error: error.message });
+        const status = error.statusCode || 500;
+        const message = status === 500 ? 'internal server error' : error.message;
+
+        if (status === 500) {
+            console.error('get_wallet_info failed:', error.message);
         }
 
-        console.error('get_wallet_info failed:', error.message);
-        res.status(500).json({ error: 'internal server error' });
+        res.status(status).json({ error: message });
     }
 });
 
