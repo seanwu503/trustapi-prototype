@@ -97,12 +97,18 @@
             color: #dc2626;
             font-size: 14px;
         }
+
+        .hint {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>TrustAPI Demo</h1>
-        <p>Enter a wallet address and check the hardcoded trust response from the local server.</p>
+        <p>Enter an Ethereum wallet address to fetch on-chain info from Alchemy via <code>POST /get_wallet_info</code>.</p>
 
         <label for="wallet">Wallet address</label>
         <input
@@ -112,25 +118,26 @@
             value="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"
         >
 
-        <button id="checkBtn">Check Wallet</button>
+        <button id="submitBtn">Get Wallet Info</button>
+        <p class="hint">Ethereum mainnet only. Transfer counts cover the last 30 days.</p>
 
         <div id="error" class="error" hidden></div>
         <pre id="result" hidden></pre>
     </div>
 
     <script>
-        const API_URL = '/check_wallet';
+        const API_URL = '/get_wallet_info';
         const walletInput = document.getElementById('wallet');
-        const checkBtn = document.getElementById('checkBtn');
+        const submitBtn = document.getElementById('submitBtn');
         const resultEl = document.getElementById('result');
         const errorEl = document.getElementById('error');
 
-        checkBtn.addEventListener('click', async () => {
+        submitBtn.addEventListener('click', async () => {
             const wallet = walletInput.value.trim();
             resultEl.hidden = true;
             errorEl.hidden = true;
-            checkBtn.disabled = true;
-            checkBtn.textContent = 'Checking...';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Loading...';
 
             try {
                 const response = await fetch(API_URL, {
@@ -142,17 +149,17 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.message || 'Request failed');
+                    throw new Error(data.error || 'Request failed');
                 }
 
                 resultEl.textContent = JSON.stringify(data, null, 2);
                 resultEl.hidden = false;
             } catch (error) {
-                errorEl.textContent = error.message + ' — is the server running? (npm start in Trust_API/)';
+                errorEl.textContent = error.message + ' — is the server running with ALCHEMY_API_KEY set?';
                 errorEl.hidden = false;
             } finally {
-                checkBtn.disabled = false;
-                checkBtn.textContent = 'Check Wallet';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Get Wallet Info';
             }
         });
     </script>
