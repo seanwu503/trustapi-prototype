@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const { getWalletInfo, normalizeWallet } = require('./alchemyClient');
 const { trySaveWalletSnapshot } = require('./db/walletRepository');
+const { extractFeatures } = require('./db/featureRepository');
 
 process.loadEnvFile(path.join(__dirname, '.env'));
 
@@ -40,23 +41,13 @@ app.post('/check_wallet', (req, res) => {
     }
 });
 
-app.post('/extract_features', (req, res) => {
+app.post('/extract_features', async (req, res) => {
     try {
         const wallet = normalizeWallet(req.body.wallet);
         const refresh = Boolean(req.body.refresh);
+        const result = await extractFeatures(wallet, refresh);
 
-        res.json({
-            wallet,
-            refresh,
-            status: 'dummy',
-            wallet_id: 1,
-            snapshot_id: 5,
-            feature_id: 2,
-            wallet_age_days: 847,
-            activity_frequency: 8.47,
-            burst_score: 2.3,
-            computed_at: new Date().toISOString()
-        });
+        res.json(result);
     } catch (error) {
         handleApiError(res, error, 'extract_features');
     }
