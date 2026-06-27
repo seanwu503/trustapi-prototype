@@ -1,6 +1,6 @@
 # TrustAPI
 
-Minimal wallet lookup service. Fetches Ethereum wallet data from Alchemy and saves snapshots to Postgres.
+Minimal wallet lookup service. Fetches Ethereum wallet data from Alchemy (balance, tx count, wallet age, 30-day transfer buckets) and saves snapshots to Postgres.
 
 ## Prerequisites
 

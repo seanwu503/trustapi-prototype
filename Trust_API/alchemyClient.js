@@ -1,6 +1,7 @@
 const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com/v2';
 const TRANSFER_WINDOW_DAYS = 30;
 const SECONDS_PER_BLOCK = 12;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const WALLET_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 
@@ -54,6 +55,71 @@ function formatResponseForLog(result) {
         ...result,
         transfers: `[${result.transfers.length} transfers omitted from log]`
     };
+}
+
+function parseTransferTimestamp(transfer) {
+    const raw = transfer && transfer.metadata && transfer.metadata.blockTimestamp;
+
+    if (raw === undefined || raw === null || raw === '') {
+        return null;
+    }
+
+    if (/^\d+$/.test(String(raw))) {
+        return Number(raw);
+    }
+
+    const parsed = Date.parse(String(raw));
+
+    if (Number.isNaN(parsed)) {
+        return null;
+    }
+
+    return Math.floor(parsed / 1000);
+}
+
+async function getBlockTimestamp(blockNumHex, blockTimestampCache) {
+    if (!blockNumHex) {
+        return null;
+    }
+
+    if (blockTimestampCache.has(blockNumHex)) {
+        return blockTimestampCache.get(blockNumHex);
+    }
+
+    const block = await callRpc('eth_getBlockByNumber', [blockNumHex, false]);
+    const timestamp = block && block.timestamp ? parseHexInt(block.timestamp) : null;
+    blockTimestampCache.set(blockNumHex, timestamp);
+
+    return timestamp;
+}
+
+async function getTransferTimestamp(transfer, blockTimestampCache) {
+    const fromMetadata = parseTransferTimestamp(transfer);
+
+    if (fromMetadata !== null) {
+        return fromMetadata;
+    }
+
+    if (transfer && transfer.blockNum) {
+        return getBlockTimestamp(transfer.blockNum, blockTimestampCache);
+    }
+
+    return null;
+}
+
+function toUtcDateKey(unixSeconds) {
+    return new Date(unixSeconds * 1000).toISOString().slice(0, 10);
+}
+
+async function addTransferToDailyCounts(dailyCounts, transfer, blockTimestampCache) {
+    const timestamp = await getTransferTimestamp(transfer, blockTimestampCache);
+
+    if (timestamp === null) {
+        return;
+    }
+
+    const day = toUtcDateKey(timestamp);
+    dailyCounts[day] = (dailyCounts[day] || 0) + 1;
 }
 
 async function callRpc(method, params) {
@@ -124,7 +190,8 @@ async function getFromBlockHex30DaysAgo() {
     return '0x' + fromBlock.toString(16);
 }
 
-async function countAssetTransfers(filter, fromBlock) {
+async function collectDailyTransferCounts(filter, fromBlock, blockTimestampCache) {
+    const dailyCounts = {};
     let total = 0;
     let pageKey;
 
@@ -143,21 +210,73 @@ async function countAssetTransfers(filter, fromBlock) {
 
         const result = await callRpc('alchemy_getAssetTransfers', [params]);
         const transfers = result && Array.isArray(result.transfers) ? result.transfers : [];
-        total += transfers.length;
+
+        for (const transfer of transfers) {
+            await addTransferToDailyCounts(dailyCounts, transfer, blockTimestampCache);
+            total += 1;
+        }
+
         pageKey = result && result.pageKey;
     } while (pageKey);
 
-    return total;
+    return { dailyCounts, total };
+}
+
+async function getEarliestTransferTimestamp(wallet, direction, blockTimestampCache) {
+    const filter = direction === 'out'
+        ? { fromAddress: wallet }
+        : { toAddress: wallet };
+
+    const result = await callRpc('alchemy_getAssetTransfers', [{
+        fromBlock: '0x0',
+        toBlock: 'latest',
+        category: ['external', 'erc20'],
+        maxCount: '0x1',
+        order: 'asc',
+        ...filter
+    }]);
+
+    const transfer = result && Array.isArray(result.transfers) ? result.transfers[0] : null;
+
+    if (!transfer) {
+        return null;
+    }
+
+    return getTransferTimestamp(transfer, blockTimestampCache);
+}
+
+async function getWalletAge(wallet, blockTimestampCache) {
+    const outTimestamp = await getEarliestTransferTimestamp(wallet, 'out', blockTimestampCache);
+    const inTimestamp = await getEarliestTransferTimestamp(wallet, 'in', blockTimestampCache);
+    const timestamps = [outTimestamp, inTimestamp].filter((value) => value !== null);
+
+    if (timestamps.length === 0) {
+        return {
+            wallet_age_days: null,
+            first_activity_at: null
+        };
+    }
+
+    const firstActivityUnix = Math.min(...timestamps);
+    const firstActivityAt = new Date(firstActivityUnix * 1000).toISOString();
+    const walletAgeDays = Math.floor((Date.now() - firstActivityUnix * 1000) / MS_PER_DAY);
+
+    return {
+        wallet_age_days: walletAgeDays,
+        first_activity_at: firstActivityAt
+    };
 }
 
 async function getWalletInfo(walletInput) {
     const wallet = normalizeWallet(walletInput);
     const fromBlock = await getFromBlockHex30DaysAgo();
+    const blockTimestampCache = new Map();
 
     const transaction_count = await getTransactionCount(wallet);
     const balance_eth = await getBalanceEth(wallet);
-    const transfer_from_count = await countAssetTransfers({ fromAddress: wallet }, fromBlock);
-    const transfer_to_count = await countAssetTransfers({ toAddress: wallet }, fromBlock);
+    const { wallet_age_days, first_activity_at } = await getWalletAge(wallet, blockTimestampCache);
+    const outgoing = await collectDailyTransferCounts({ fromAddress: wallet }, fromBlock, blockTimestampCache);
+    const incoming = await collectDailyTransferCounts({ toAddress: wallet }, fromBlock, blockTimestampCache);
 
     return {
         wallet,
@@ -165,11 +284,20 @@ async function getWalletInfo(walletInput) {
         transfer_window_days: TRANSFER_WINDOW_DAYS,
         transaction_count,
         balance_eth,
-        transfer_from_count,
-        transfer_to_count
+        transfer_from_count: outgoing.total,
+        transfer_to_count: incoming.total,
+        wallet_age_days,
+        first_activity_at,
+        daily_transfer_counts: {
+            out: outgoing.dailyCounts,
+            in: incoming.dailyCounts
+        }
     };
 }
 
 module.exports = {
-    getWalletInfo
+    getWalletInfo,
+    parseTransferTimestamp,
+    getTransferTimestamp,
+    toUtcDateKey
 };

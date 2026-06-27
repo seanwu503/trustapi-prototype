@@ -22,9 +22,12 @@ async function saveWalletSnapshot(walletInfo) {
             balance_eth,
             transfer_from_count,
             transfer_to_count,
-            transfer_window_days
+            transfer_window_days,
+            wallet_age_days,
+            first_activity_at,
+            daily_transfer_counts
         )
-        values ($1, $2, $3, $4, $5, $6)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         returning id
         `,
         [
@@ -33,7 +36,10 @@ async function saveWalletSnapshot(walletInfo) {
             walletInfo.balance_eth,
             walletInfo.transfer_from_count,
             walletInfo.transfer_to_count,
-            walletInfo.transfer_window_days
+            walletInfo.transfer_window_days,
+            walletInfo.wallet_age_days,
+            walletInfo.first_activity_at,
+            JSON.stringify(walletInfo.daily_transfer_counts)
         ]
     );
 

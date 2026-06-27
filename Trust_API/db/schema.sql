@@ -15,8 +15,16 @@ create table if not exists wallet_snapshots (
     transfer_from_count   integer not null,
     transfer_to_count     integer not null,
     transfer_window_days  integer not null default 30,
+    wallet_age_days       integer,
+    first_activity_at     timestamptz,
+    daily_transfer_counts jsonb not null default '{"out":{},"in":{}}'::jsonb,
     fetched_at            timestamptz not null default now()
 );
 
 create index if not exists wallet_snapshots_wallet_id_idx
     on wallet_snapshots (wallet_id, fetched_at desc);
+
+-- Safe to re-run on existing databases
+alter table wallet_snapshots add column if not exists wallet_age_days integer;
+alter table wallet_snapshots add column if not exists first_activity_at timestamptz;
+alter table wallet_snapshots add column if not exists daily_transfer_counts jsonb not null default '{"out":{},"in":{}}'::jsonb;
