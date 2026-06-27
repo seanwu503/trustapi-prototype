@@ -103,6 +103,39 @@
             font-size: 13px;
             color: #94a3b8;
         }
+
+        .section {
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .checkbox-row input {
+            width: auto;
+            margin: 0;
+        }
+
+        button.secondary {
+            background: #6366f1;
+        }
+
+        button.secondary:hover {
+            background: #4f46e5;
+        }
     </style>
 </head>
 <body>
@@ -121,46 +154,75 @@
         <button id="submitBtn">Get Wallet Info</button>
         <p class="hint">Ethereum mainnet only. Includes wallet age, 30-day transfer counts, and daily in/out buckets.</p>
 
+        <div class="section">
+            <h2>Extract Features</h2>
+            <p>Compute trust features from a wallet snapshot via <code>POST /extract_features</code>.</p>
+
+            <label class="checkbox-row">
+                <input id="refresh" type="checkbox">
+                Refresh snapshot from Alchemy before extracting
+            </label>
+
+            <button id="extractBtn" class="secondary">Extract Features</button>
+            <p class="hint">Stub endpoint — returns dummy feature data for now.</p>
+        </div>
+
         <div id="error" class="error" hidden></div>
         <pre id="result" hidden></pre>
     </div>
 
     <script>
-        const API_URL = '/get_wallet_info';
         const walletInput = document.getElementById('wallet');
+        const refreshInput = document.getElementById('refresh');
         const submitBtn = document.getElementById('submitBtn');
+        const extractBtn = document.getElementById('extractBtn');
         const resultEl = document.getElementById('result');
         const errorEl = document.getElementById('error');
 
-        submitBtn.addEventListener('click', async () => {
-            const wallet = walletInput.value.trim();
+        async function callApi(url, body, button, loadingText, defaultText) {
             resultEl.hidden = true;
             errorEl.hidden = true;
+            button.disabled = true;
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Loading...';
+            extractBtn.disabled = true;
+            button.textContent = loadingText;
 
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ wallet })
+                    body: JSON.stringify(body)
                 });
 
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Request failed');
+                    errorEl.textContent = data.error || 'Request failed';
+                    errorEl.hidden = false;
+                    return;
                 }
 
                 resultEl.textContent = JSON.stringify(data, null, 2);
                 resultEl.hidden = false;
             } catch (error) {
-                errorEl.textContent = error.message + ' — is the server running with ALCHEMY_API_KEY set?';
+                errorEl.textContent = 'Could not reach the server — is it running on port 8000?';
                 errorEl.hidden = false;
             } finally {
+                button.textContent = defaultText;
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Get Wallet Info';
+                extractBtn.disabled = false;
             }
+        }
+
+        submitBtn.addEventListener('click', () => {
+            const wallet = walletInput.value.trim();
+            callApi('/get_wallet_info', { wallet }, submitBtn, 'Loading...', 'Get Wallet Info');
+        });
+
+        extractBtn.addEventListener('click', () => {
+            const wallet = walletInput.value.trim();
+            const refresh = refreshInput.checked;
+            callApi('/extract_features', { wallet, refresh }, extractBtn, 'Extracting...', 'Extract Features');
         });
     </script>
 </body>
