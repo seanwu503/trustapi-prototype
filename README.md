@@ -26,6 +26,12 @@ DATABASE_URL=postgresql://gwu@localhost:5432/wallet_db
 Create tables:
 
 ```bash
+npm run db:schema
+```
+
+Or with psql directly:
+
+```bash
 psql -d wallet_db -f db/schema.sql
 ```
 

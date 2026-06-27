@@ -24,6 +24,19 @@ create table if not exists wallet_snapshots (
 create index if not exists wallet_snapshots_wallet_id_idx
     on wallet_snapshots (wallet_id, fetched_at desc);
 
+create table if not exists wallet_features (
+    id                  serial primary key,
+    wallet_id           integer not null references wallets(id) on delete cascade,
+    snapshot_id         integer not null references wallet_snapshots(id) on delete cascade,
+    wallet_age_days     integer,
+    activity_frequency  numeric not null,
+    burst_score         numeric not null,
+    computed_at         timestamptz not null default now()
+);
+
+create index if not exists wallet_features_wallet_id_idx
+    on wallet_features (wallet_id, computed_at desc);
+
 -- Safe to re-run on existing databases
 alter table wallet_snapshots add column if not exists wallet_age_days integer;
 alter table wallet_snapshots add column if not exists first_activity_at timestamptz;
