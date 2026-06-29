@@ -23,24 +23,6 @@ function handleApiError(res, error, routeName) {
     res.status(status).json({ error: message });
 }
 
-app.post('/check_wallet', (req, res) => {
-    try {
-        const wallet = normalizeWallet(req.body.wallet);
-
-        res.json({
-            wallet,
-            status: 'success',
-            human_likelihood: 'high',
-            trust_tier: 'gold',
-            confidence: 0.92,
-            account_age_days: 847,
-            activity_score: 8.7
-        });
-    } catch (error) {
-        handleApiError(res, error, 'check_wallet');
-    }
-});
-
 app.post('/extract_features', async (req, res) => {
     try {
         const wallet = normalizeWallet(req.body.wallet);
