@@ -3,6 +3,7 @@ const path = require('path');
 const { getWalletInfo, normalizeWallet } = require('./alchemyClient');
 const { trySaveWalletSnapshot } = require('./db/walletRepository');
 const { extractFeatures } = require('./db/featureRepository');
+const { scoreWallet } = require('./scoringService');
 
 process.loadEnvFile(path.join(__dirname, '.env'));
 
@@ -32,6 +33,17 @@ app.post('/extract_features', async (req, res) => {
         res.json(result);
     } catch (error) {
         handleApiError(res, error, 'extract_features');
+    }
+});
+
+app.post('/score_wallet', async (req, res) => {
+    try {
+        const wallet = normalizeWallet(req.body.wallet);
+        const result = await scoreWallet(wallet);
+
+        res.json(result);
+    } catch (error) {
+        handleApiError(res, error, 'score_wallet');
     }
 });
 

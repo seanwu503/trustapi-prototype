@@ -55,8 +55,5 @@ function extractFeaturesFromSnapshot(snapshot) {
 }
 
 module.exports = {
-    extractFeaturesFromSnapshot,
-    computeActivityFrequency,
-    computeBurstScore,
-    mergeDailyCounts
+    extractFeaturesFromSnapshot
 };

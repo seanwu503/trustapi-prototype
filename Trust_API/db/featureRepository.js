@@ -9,6 +9,20 @@ function createError(statusCode, message) {
     return error;
 }
 
+const FEATURE_SELECT = `
+    select
+        wf.id as feature_id,
+        wf.wallet_id,
+        wf.snapshot_id,
+        wf.wallet_age_days,
+        wf.activity_frequency,
+        wf.burst_score,
+        wf.computed_at as feature_computed_at,
+        w.address as wallet
+    from wallet_features wf
+    join wallets w on w.id = wf.wallet_id
+`;
+
 async function getWalletByAddress(address, chain = 'ethereum') {
     const result = await query(
         `
@@ -45,6 +59,29 @@ async function getSnapshotById(snapshotId) {
         where id = $1
         `,
         [snapshotId]
+    );
+
+    return result.rows[0] || null;
+}
+
+async function getFeatureById(featureId) {
+    const result = await query(
+        `${FEATURE_SELECT} where wf.id = $1`,
+        [featureId]
+    );
+
+    return result.rows[0] || null;
+}
+
+async function getLatestFeaturesByWallet(wallet, chain = 'ethereum') {
+    const result = await query(
+        `
+        ${FEATURE_SELECT}
+        where w.address = $1 and w.chain = $2
+        order by wf.computed_at desc
+        limit 1
+        `,
+        [wallet, chain]
     );
 
     return result.rows[0] || null;
@@ -132,7 +169,6 @@ async function extractFeatures(wallet, refresh = false) {
 
 module.exports = {
     extractFeatures,
-    getWalletByAddress,
-    getLatestSnapshot,
-    saveWalletFeatures
+    getFeatureById,
+    getLatestFeaturesByWallet
 };

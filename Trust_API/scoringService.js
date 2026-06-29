@@ -1,3 +1,7 @@
+const path = require('path');
+const { isDatabaseConfigured } = require('./db/client');
+const { getFeatureById, getLatestFeaturesByWallet } = require('./db/featureRepository');
+
 const WEIGHTS = {
     age: 0.4,
     activity: 0.3,
@@ -8,6 +12,12 @@ const TIER_THRESHOLDS = {
     gold: 75,
     silver: 50
 };
+
+function createError(statusCode, message) {
+    const error = new Error(message);
+    error.statusCode = statusCode;
+    return error;
+}
 
 function clamp(value, min = 0, max = 1) {
     return Math.min(max, Math.max(min, value));
@@ -105,9 +115,87 @@ function computeTrustScore(features) {
     };
 }
 
+function buildScoreResponse(feature, score) {
+    return {
+        wallet: feature.wallet,
+        wallet_id: feature.wallet_id,
+        feature_id: feature.feature_id,
+        snapshot_id: feature.snapshot_id,
+        features: {
+            wallet_age_days: feature.wallet_age_days,
+            activity_frequency: Number(feature.activity_frequency),
+            burst_score: Number(feature.burst_score)
+        },
+        trust_score: score.trust_score,
+        trust_tier: score.trust_tier,
+        human_likelihood: score.human_likelihood,
+        confidence: score.confidence,
+        breakdown: score.breakdown,
+        computed_at: new Date().toISOString()
+    };
+}
+
+function scoreFeatureRow(feature) {
+    const score = computeTrustScore(feature);
+    return buildScoreResponse(feature, score);
+}
+
+async function scoreWallet(wallet) {
+    if (!isDatabaseConfigured()) {
+        throw createError(503, 'database not configured');
+    }
+
+    const feature = await getLatestFeaturesByWallet(wallet);
+
+    if (!feature) {
+        throw createError(404, 'no features found — run /extract_features first');
+    }
+
+    return scoreFeatureRow(feature);
+}
+
+async function scoreByFeatureId(featureId) {
+    if (!isDatabaseConfigured()) {
+        throw createError(503, 'database not configured');
+    }
+
+    const feature = await getFeatureById(featureId);
+
+    if (!feature) {
+        throw createError(404, `feature not found: ${featureId}`);
+    }
+
+    return scoreFeatureRow(feature);
+}
+
+async function runCli() {
+    process.loadEnvFile(path.join(__dirname, '.env'));
+
+    const featureId = Number.parseInt(process.argv[2], 10);
+
+    if (!Number.isInteger(featureId) || featureId <= 0) {
+        console.error('Usage: node scoringService.js <feature_id>');
+        console.error('   or: npm run score -- <feature_id>');
+        process.exit(1);
+    }
+
+    if (!isDatabaseConfigured()) {
+        console.error('DATABASE_URL is not set.');
+        process.exit(1);
+    }
+
+    const result = await scoreByFeatureId(featureId);
+
+    console.log(JSON.stringify(result, null, 2));
+}
+
+if (require.main === module) {
+    runCli().catch((error) => {
+        console.error(error.message);
+        process.exit(1);
+    });
+}
+
 module.exports = {
-    computeTrustScore,
-    scoreAge,
-    scoreActivity,
-    scoreBurst
+    scoreWallet
 };

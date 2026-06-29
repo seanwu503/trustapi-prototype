@@ -136,6 +136,14 @@
         button.secondary:hover {
             background: #4f46e5;
         }
+
+        button.tertiary {
+            background: #059669;
+        }
+
+        button.tertiary:hover {
+            background: #047857;
+        }
     </style>
 </head>
 <body>
@@ -167,6 +175,14 @@
             <p class="hint">Computes wallet age, activity frequency, and burst score from the latest snapshot.</p>
         </div>
 
+        <div class="section">
+            <h2>Score Wallet</h2>
+            <p>Compute a trust score from the latest features via <code>POST /score_wallet</code>.</p>
+
+            <button id="scoreBtn" class="tertiary">Score Wallet</button>
+            <p class="hint">Requires features first — run Extract Features if this wallet is new.</p>
+        </div>
+
         <div id="error" class="error" hidden></div>
         <pre id="result" hidden></pre>
     </div>
@@ -176,15 +192,18 @@
         const refreshInput = document.getElementById('refresh');
         const submitBtn = document.getElementById('submitBtn');
         const extractBtn = document.getElementById('extractBtn');
+        const scoreBtn = document.getElementById('scoreBtn');
         const resultEl = document.getElementById('result');
         const errorEl = document.getElementById('error');
+
+        const actionButtons = [submitBtn, extractBtn, scoreBtn];
 
         async function callApi(url, body, button, loadingText, defaultText) {
             resultEl.hidden = true;
             errorEl.hidden = true;
-            button.disabled = true;
-            submitBtn.disabled = true;
-            extractBtn.disabled = true;
+            actionButtons.forEach((btn) => {
+                btn.disabled = true;
+            });
             button.textContent = loadingText;
 
             try {
@@ -209,8 +228,9 @@
                 errorEl.hidden = false;
             } finally {
                 button.textContent = defaultText;
-                submitBtn.disabled = false;
-                extractBtn.disabled = false;
+                actionButtons.forEach((btn) => {
+                    btn.disabled = false;
+                });
             }
         }
 
@@ -223,6 +243,11 @@
             const wallet = walletInput.value.trim();
             const refresh = refreshInput.checked;
             callApi('/extract_features', { wallet, refresh }, extractBtn, 'Extracting...', 'Extract Features');
+        });
+
+        scoreBtn.addEventListener('click', () => {
+            const wallet = walletInput.value.trim();
+            callApi('/score_wallet', { wallet }, scoreBtn, 'Scoring...', 'Score Wallet');
         });
     </script>
 </body>

@@ -297,8 +297,5 @@ async function getWalletInfo(walletInput) {
 
 module.exports = {
     getWalletInfo,
-    normalizeWallet,
-    parseTransferTimestamp,
-    getTransferTimestamp,
-    toUtcDateKey
+    normalizeWallet
 };
