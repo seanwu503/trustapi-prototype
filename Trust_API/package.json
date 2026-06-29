@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "db:schema": "node db/apply-schema.js"
+    "db:schema": "node db/apply-schema.js",
+    "score": "node score-feature.js"
   },
   "license": "ISC",
   "type": "commonjs",
