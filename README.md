@@ -1,6 +1,8 @@
 # TrustAPI
 
-Minimal wallet lookup service. Fetches Ethereum wallet data from Alchemy (balance, tx count, wallet age, 30-day transfer buckets) and saves snapshots to Postgres.
+Prototype API that fetches Ethereum wallet data via Alchemy, stores snapshots in Postgres, extracts trust features, and computes a weighted trust score.
+
+**Pipeline:** `get_wallet_info` → `extract_features` → `score_wallet`
 
 ## Prerequisites
 
@@ -32,12 +34,13 @@ npm run db:schema
 Or with psql directly:
 
 ```bash
-psql -d wallet_db -f db/schema.sql
+psql -d wallet_db -f Trust_API/db/schema.sql
 ```
 
 ## Run
 
 ```bash
+cd Trust_API
 npm start
 ```
 
@@ -45,7 +48,11 @@ Open the demo UI: **http://localhost:8000/demo.html**
 
 ## API
 
-**`POST /get_wallet_info`**
+All endpoints accept a `wallet` address (`0x` + 40 hex chars).
+
+### `POST /get_wallet_info`
+
+Fetches on-chain data from Alchemy and saves a snapshot to Postgres.
 
 ```bash
 curl -X POST http://localhost:8000/get_wallet_info \
@@ -53,17 +60,58 @@ curl -X POST http://localhost:8000/get_wallet_info \
   -d '{"wallet":"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"}'
 ```
 
-**`POST /check_wallet`** — returns hardcoded dummy trust data (no Alchemy/DB).
+Returns balance, transaction count, wallet age, and 30-day transfer buckets.
+
+### `POST /extract_features`
+
+Computes features from the latest snapshot (or fetches fresh data when `refresh` is true).
+
+```bash
+curl -X POST http://localhost:8000/extract_features \
+  -H "Content-Type: application/json" \
+  -d '{"wallet":"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7","refresh":false}'
+```
+
+Features: `wallet_age_days`, `activity_frequency`, `burst_score`. Stored in `wallet_features`.
+
+For a new wallet with no snapshot, use `"refresh": true` or call `/get_wallet_info` first.
+
+### `POST /score_wallet`
+
+Computes a trust score from the latest features. Does not call Alchemy or store scores.
+
+```bash
+curl -X POST http://localhost:8000/score_wallet \
+  -H "Content-Type: application/json" \
+  -d '{"wallet":"0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"}'
+```
+
+Returns `trust_score` (0–100), `trust_tier` (bronze/silver/gold), `human_likelihood`, and `confidence`.
+
+Returns `404` if no features exist — run `/extract_features` first.
+
+## CLI
+
+Score a feature row by ID:
+
+```bash
+cd Trust_API
+npm run score -- 1
+```
 
 ## Project layout
 
 ```
-demo.html              # demo UI
+demo.html                 # demo UI
 Trust_API/
-  server.js            # Express server
-  alchemyClient.js     # Alchemy API calls
+  server.js               # Express server
+  alchemyClient.js        # Alchemy API calls
+  featurePipeline.js      # feature math from snapshots
+  scoringService.js       # weighted trust score + CLI
   db/
-    schema.sql         # Postgres tables
-    client.js          # DB connection
-    walletRepository.js
+    schema.sql            # Postgres tables
+    apply-schema.js       # migration runner
+    client.js             # DB connection
+    walletRepository.js   # wallet + snapshot writes
+    featureRepository.js  # feature extraction + reads
 ```
