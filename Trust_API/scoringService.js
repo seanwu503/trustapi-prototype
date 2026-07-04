@@ -126,7 +126,7 @@ function buildScoreResponse(feature, score) {
         human_likelihood: score.human_likelihood,
         confidence: score.confidence,
         breakdown: score.breakdown,
-        computed_at: new Date().toISOString()
+        snapshot_fetched_at: new Date(feature.snapshot_fetched_at).toISOString()
     };
 }
 

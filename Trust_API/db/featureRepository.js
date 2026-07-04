@@ -13,9 +13,11 @@ const FEATURE_SELECT = `
         wf.activity_frequency,
         wf.burst_score,
         wf.computed_at as feature_computed_at,
+        ws.fetched_at as snapshot_fetched_at,
         w.address as wallet
     from wallet_features wf
     join wallets w on w.id = wf.wallet_id
+    join wallet_snapshots ws on ws.id = wf.snapshot_id
 `;
 
 async function getWalletByAddress(address, chain = 'ethereum') {
@@ -162,8 +164,35 @@ async function extractFeatures(wallet, refresh = false) {
     };
 }
 
+async function ensureFeaturesReady(wallet) {
+    if (!isDatabaseConfigured()) {
+        throw createError(503, 'database not configured', 'DATABASE_NOT_CONFIGURED');
+    }
+
+    const existingFeatures = await getLatestFeaturesByWallet(wallet);
+
+    if (existingFeatures) {
+        return;
+    }
+
+    const walletRow = await getWalletByAddress(wallet);
+
+    if (!walletRow) {
+        throw createError(404, 'wallet not found — no snapshot available', 'WALLET_NOT_FOUND');
+    }
+
+    const snapshot = await getLatestSnapshot(walletRow.id);
+
+    if (!snapshot) {
+        throw createError(404, 'wallet not found — no snapshot available', 'WALLET_NOT_FOUND');
+    }
+
+    await extractFeatures(wallet, false);
+}
+
 module.exports = {
     extractFeatures,
+    ensureFeaturesReady,
     getFeatureById,
     getLatestFeaturesByWallet
 };
