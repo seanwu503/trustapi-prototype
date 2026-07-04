@@ -1,3 +1,5 @@
+const { createError } = require('./middleware/errors');
+
 const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com/v2';
 const TRANSFER_WINDOW_DAYS = 30;
 const SECONDS_PER_BLOCK = 12;
@@ -9,21 +11,15 @@ function getApiKey() {
     return process.env.ALCHEMY_API_KEY || '';
 }
 
-function createError(statusCode, message) {
-    const error = new Error(message);
-    error.statusCode = statusCode;
-    return error;
-}
-
 function normalizeWallet(wallet) {
     const value = typeof wallet === 'string' ? wallet.trim() : '';
 
     if (!value) {
-        throw createError(400, 'wallet is required');
+        throw createError(400, 'wallet is required', 'WALLET_REQUIRED');
     }
 
     if (!WALLET_PATTERN.test(value)) {
-        throw createError(400, 'invalid wallet address');
+        throw createError(400, 'invalid wallet address', 'INVALID_WALLET');
     }
 
     return value;
@@ -126,7 +122,7 @@ async function callRpc(method, params) {
     const apiKey = getApiKey();
 
     if (!apiKey) {
-        throw createError(503, 'alchemy not configured');
+        throw createError(503, 'alchemy not configured', 'ALCHEMY_NOT_CONFIGURED');
     }
 
     const requestBody = {
@@ -153,7 +149,7 @@ async function callRpc(method, params) {
             status: response.status,
             error: 'HTTP request failed'
         }, null, 2));
-        throw createError(502, 'alchemy request failed');
+        throw createError(502, 'alchemy request failed', 'ALCHEMY_REQUEST_FAILED');
     }
 
     const data = await response.json();
@@ -165,7 +161,7 @@ async function callRpc(method, params) {
     }, null, 2));
 
     if (data.error) {
-        throw createError(502, 'alchemy request failed');
+        throw createError(502, 'alchemy request failed', 'ALCHEMY_REQUEST_FAILED');
     }
 
     return data.result;

@@ -1,6 +1,7 @@
 const path = require('path');
 const { isDatabaseConfigured } = require('./db/client');
 const { getFeatureById, getLatestFeaturesByWallet } = require('./db/featureRepository');
+const { createError } = require('./middleware/errors');
 
 const WEIGHTS = {
     age: 0.4,
@@ -12,12 +13,6 @@ const TIER_THRESHOLDS = {
     gold: 75,
     silver: 50
 };
-
-function createError(statusCode, message) {
-    const error = new Error(message);
-    error.statusCode = statusCode;
-    return error;
-}
 
 function clamp(value, min = 0, max = 1) {
     return Math.min(max, Math.max(min, value));
@@ -142,13 +137,13 @@ function scoreFeatureRow(feature) {
 
 async function scoreWallet(wallet) {
     if (!isDatabaseConfigured()) {
-        throw createError(503, 'database not configured');
+        throw createError(503, 'database not configured', 'DATABASE_NOT_CONFIGURED');
     }
 
     const feature = await getLatestFeaturesByWallet(wallet);
 
     if (!feature) {
-        throw createError(404, 'no features found — run /extract_features first');
+        throw createError(404, 'no features found — run /extract_features first', 'FEATURES_NOT_FOUND');
     }
 
     return scoreFeatureRow(feature);
@@ -156,13 +151,13 @@ async function scoreWallet(wallet) {
 
 async function scoreByFeatureId(featureId) {
     if (!isDatabaseConfigured()) {
-        throw createError(503, 'database not configured');
+        throw createError(503, 'database not configured', 'DATABASE_NOT_CONFIGURED');
     }
 
     const feature = await getFeatureById(featureId);
 
     if (!feature) {
-        throw createError(404, `feature not found: ${featureId}`);
+        throw createError(404, `feature not found: ${featureId}`, 'FEATURE_NOT_FOUND');
     }
 
     return scoreFeatureRow(feature);

@@ -2,12 +2,7 @@ const { isDatabaseConfigured, query } = require('./client');
 const { extractFeaturesFromSnapshot } = require('../featurePipeline');
 const { getWalletInfo } = require('../alchemyClient');
 const { saveWalletSnapshot } = require('./walletRepository');
-
-function createError(statusCode, message) {
-    const error = new Error(message);
-    error.statusCode = statusCode;
-    return error;
-}
+const { createError } = require('../middleware/errors');
 
 const FEATURE_SELECT = `
     select
@@ -130,13 +125,13 @@ async function resolveSnapshot(wallet, refresh) {
     const walletRow = await getWalletByAddress(wallet);
 
     if (!walletRow) {
-        throw createError(404, 'no snapshot found — use /get_wallet_info first or set refresh to true');
+        throw createError(404, 'no snapshot found — use /get_wallet_info first or set refresh to true', 'SNAPSHOT_NOT_FOUND');
     }
 
     const snapshot = await getLatestSnapshot(walletRow.id);
 
     if (!snapshot) {
-        throw createError(404, 'no snapshot found — use /get_wallet_info first or set refresh to true');
+        throw createError(404, 'no snapshot found — use /get_wallet_info first or set refresh to true', 'SNAPSHOT_NOT_FOUND');
     }
 
     return {
@@ -147,7 +142,7 @@ async function resolveSnapshot(wallet, refresh) {
 
 async function extractFeatures(wallet, refresh = false) {
     if (!isDatabaseConfigured()) {
-        throw createError(503, 'database not configured');
+        throw createError(503, 'database not configured', 'DATABASE_NOT_CONFIGURED');
     }
 
     const { wallet_id, snapshot } = await resolveSnapshot(wallet, refresh);
