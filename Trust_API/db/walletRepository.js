@@ -1,4 +1,4 @@
-const { isDatabaseConfigured, query } = require('./client');
+const { isDatabaseConfigured, query, getPool } = require('./client');
 
 async function saveWalletSnapshot(walletInfo) {
     const walletResult = await query(
@@ -64,7 +64,72 @@ async function trySaveWalletSnapshot(walletInfo) {
     }
 }
 
+async function deleteWalletByAddress(address, chain = 'ethereum') {
+    const pool = getPool();
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const walletResult = await client.query(
+            `
+            select id, address, chain
+            from wallets
+            where address = $1 and chain = $2
+            `,
+            [address, chain]
+        );
+
+        const wallet = walletResult.rows[0];
+
+        if (!wallet) {
+            await client.query('ROLLBACK');
+            return null;
+        }
+
+        const featuresResult = await client.query(
+            `
+            delete from wallet_features
+            where wallet_id = $1
+            `,
+            [wallet.id]
+        );
+
+        const snapshotsResult = await client.query(
+            `
+            delete from wallet_snapshots
+            where wallet_id = $1
+            `,
+            [wallet.id]
+        );
+
+        await client.query(
+            `
+            delete from wallets
+            where id = $1
+            `,
+            [wallet.id]
+        );
+
+        await client.query('COMMIT');
+
+        return {
+            id: wallet.id,
+            address: wallet.address,
+            chain: wallet.chain,
+            features_deleted: featuresResult.rowCount,
+            snapshots_deleted: snapshotsResult.rowCount
+        };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     saveWalletSnapshot,
-    trySaveWalletSnapshot
+    trySaveWalletSnapshot,
+    deleteWalletByAddress
 };

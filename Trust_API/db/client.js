@@ -32,5 +32,6 @@ async function query(text, params) {
 
 module.exports = {
     isDatabaseConfigured,
-    query
+    query,
+    getPool
 };
