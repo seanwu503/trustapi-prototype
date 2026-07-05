@@ -46,7 +46,11 @@ npm start
 
 Open the demo UI: **http://localhost:8000/demo.html**
 
-## API
+## External API
+
+Platform endpoints (`/check_wallet`, `/generate_proof`) are documented in **[Trust_API/docs/API.md](Trust_API/docs/API.md)**.
+
+## Internal API
 
 All endpoints accept a `wallet` address (`0x` + 40 hex chars).
 
