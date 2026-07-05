@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const { getWalletInfo, normalizeWallet } = require('./alchemyClient');
 const { trySaveWalletSnapshot } = require('./db/walletRepository');
-const { extractFeatures } = require('./db/featureRepository');
+const { extractFeatures, getLatestFeaturesByWallet } = require('./db/featureRepository');
 const { scoreWallet } = require('./scoringService');
 const { checkWallet } = require('./trustService');
 const { generateProof } = require('./proofService');
@@ -14,21 +14,32 @@ process.loadEnvFile(path.join(__dirname, '.env'));
 
 const app = express();
 const port = process.env.PORT || 8000;
+const FEATURE_TTL = 7 * 24 * 60 * 60 * 1000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..')));
 
 app.post('/check_wallet', requireApiKey, asyncRoute('check_wallet', async (req, res) => {
     const wallet = normalizeWallet(req.body.wallet);
-    const result = await checkWallet(wallet);
 
+    let feature = await getLatestFeaturesByWallet(wallet);
+
+    // if feature is null or feature.computed_at is older than 7 days, then we need to repull everything
+    if (feature === null || feature.feature_computed_at < Date.now() - FEATURE_TTL) {
+        await extractFeatures(wallet, true);
+    }
+
+    const result = await checkWallet(wallet);
     res.json(result);
 }));
 
 app.post('/generate_proof', requireApiKey, asyncRoute('generate_proof', async (req, res) => {
     const wallet = normalizeWallet(req.body.wallet);
+    let feature = await getLatestFeaturesByWallet(wallet);
+    if (feature === null || feature.feature_computed_at < Date.now() - 7 * 24 * 60 * 60 * 1000) {
+        await extractFeatures(wallet, true);
+    }
     const result = await generateProof(wallet);
-
     res.json(result);
 }));
 
