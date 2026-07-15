@@ -6,6 +6,7 @@ const { extractFeatures, getLatestFeaturesByWallet } = require('./db/featureRepo
 const { scoreWallet } = require('./scoringService');
 const { checkWallet } = require('./trustService');
 const { generateProof } = require('./proofService');
+const { getTierStats, getFlaggedWallets } = require('./dashboardStats');
 const { asyncRoute } = require('./middleware/asyncRoute');
 const { requireApiKey } = require('./middleware/auth');
 const { sendError } = require('./middleware/errors');
@@ -40,6 +41,16 @@ app.post('/generate_proof', requireApiKey, asyncRoute('generate_proof', async (r
         await extractFeatures(wallet, true);
     }
     const result = await generateProof(wallet);
+    res.json(result);
+}));
+
+app.get('/internal/tier_stats', asyncRoute('tier_stats', async (req, res) => {
+    const result = await getTierStats();
+    res.json(result);
+}));
+
+app.get('/internal/flagged_wallets', asyncRoute('flagged_wallets', async (req, res) => {
+    const result = await getFlaggedWallets();
     res.json(result);
 }));
 

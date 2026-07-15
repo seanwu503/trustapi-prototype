@@ -192,5 +192,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-    scoreWallet
+    scoreWallet,
+    computeTrustScore
 };

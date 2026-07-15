@@ -84,6 +84,29 @@ async function getLatestFeaturesByWallet(wallet, chain = 'ethereum') {
     return result.rows[0] || null;
 }
 
+async function getLatestFeaturesForAllWallets() {
+    const result = await query(
+        `
+        select distinct on (wf.wallet_id)
+            wf.id as feature_id,
+            wf.wallet_id,
+            wf.snapshot_id,
+            wf.wallet_age_days,
+            wf.activity_frequency,
+            wf.burst_score,
+            wf.computed_at as feature_computed_at,
+            ws.fetched_at as snapshot_fetched_at,
+            w.address as wallet
+        from wallet_features wf
+        join wallets w on w.id = wf.wallet_id
+        join wallet_snapshots ws on ws.id = wf.snapshot_id
+        order by wf.wallet_id, wf.computed_at desc
+        `
+    );
+
+    return result.rows;
+}
+
 async function saveWalletFeatures(walletId, snapshotId, features) {
     const result = await query(
         `
@@ -194,5 +217,6 @@ module.exports = {
     extractFeatures,
     ensureFeaturesReady,
     getFeatureById,
-    getLatestFeaturesByWallet
+    getLatestFeaturesByWallet,
+    getLatestFeaturesForAllWallets
 };

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustAPI Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8fafc;
+            color: #0f172a;
+            min-height: 100vh;
+            padding: 32px 24px;
+        }
+
+        .page {
+            max-width: 720px;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            appearance: none;
+            border: none;
+            background: transparent;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .tab:hover {
+            color: #0f172a;
+        }
+
+        .tab.active {
+            color: #0ea5e9;
+            border-bottom-color: #0ea5e9;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .panel h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .panel > p {
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .placeholder {
+            margin-top: 20px;
+            padding: 24px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        button.primary,
+        button.secondary {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: #0ea5e9;
+            color: white;
+        }
+
+        button.primary:hover {
+            background: #0284c7;
+        }
+
+        button.secondary {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        button.secondary:hover {
+            background: #cbd5e1;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .score-card {
+            margin-top: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f8fafc;
+        }
+
+        .score-card.hidden {
+            display: none;
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+
+        .score-row:last-child {
+            border-bottom: none;
+        }
+
+        .score-row .label {
+            color: #64748b;
+        }
+
+        .score-row .value {
+            font-weight: 600;
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .tier {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .tier.gold { background: #fef3c7; color: #92400e; }
+        .tier.silver { background: #e2e8f0; color: #334155; }
+        .tier.bronze { background: #ffedd5; color: #9a3412; }
+
+        .hint {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: 72px 1fr 40px;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .bar-track {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .bar-fill.bronze { background: #ea580c; }
+        .bar-fill.silver { background: #64748b; }
+        .bar-fill.gold { background: #eab308; }
+
+        .stats-meta {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .wallet-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .wallet-table th,
+        .wallet-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .wallet-table th {
+            color: #64748b;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .wallet-table td:first-child {
+            font-family: ui-monospace, monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1>TrustAPI Dashboard</h1>
+        <p class="subtitle">Internal ops view for wallet trust checks.</p>
+
+        <div class="tabs" role="tablist">
+            <button class="tab active" data-tab="lookup" type="button">Wallet lookup</button>
+            <button class="tab" data-tab="tiers" type="button">Tier distribution</button>
+            <button class="tab" data-tab="flagged" type="button">Flagged wallets</button>
+        </div>
+
+        <section class="panel active" id="lookup">
+            <h2>Wallet lookup</h2>
+            <p>Search a wallet address and view its trust score via <code>POST /check_wallet</code>.</p>
+
+            <label for="apiKey">API key</label>
+            <input id="apiKey" type="password" placeholder="X-API-Key value from .env" autocomplete="off">
+
+            <label for="wallet">Wallet address</label>
+            <input
+                id="wallet"
+                type="text"
+                placeholder="0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb7"
+                value="0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
+            >
+
+            <div class="actions">
+                <button id="checkBtn" class="primary" type="button">Check wallet</button>
+                <button id="proofBtn" class="secondary" type="button">Generate proof</button>
+            </div>
+            <p class="hint">API key is saved in this browser only (localStorage).</p>
+
+            <div id="lookupError" class="error" hidden></div>
+
+            <div id="scoreCard" class="score-card hidden"></div>
+        </section>
+
+        <section class="panel" id="tiers">
+            <h2>Tier distribution</h2>
+            <p>See how wallets spread across bronze, silver, and gold (latest features per wallet).</p>
+
+            <div class="actions">
+                <button id="refreshTiersBtn" class="primary" type="button">Refresh</button>
+            </div>
+
+            <div id="tiersError" class="error" hidden></div>
+            <div id="tiersContent"></div>
+            <div class="placeholder" id="tiersPlaceholder">Click Refresh to load tier stats.</div>
+        </section>
+
+        <section class="panel" id="flagged">
+            <h2>Flagged wallets</h2>
+            <p>Wallets with trust tier <strong>bronze</strong> (latest features per wallet).</p>
+
+            <div class="actions">
+                <button id="refreshFlaggedBtn" class="primary" type="button">Refresh</button>
+            </div>
+
+            <div id="flaggedError" class="error" hidden></div>
+            <div id="flaggedContent"></div>
+            <div class="placeholder" id="flaggedPlaceholder">Click Refresh to load flagged wallets.</div>
+        </section>
+    </div>
+
+    <script>
+        const tabs = document.querySelectorAll('.tab');
+        const panels = document.querySelectorAll('.panel');
+        const apiKeyInput = document.getElementById('apiKey');
+        const walletInput = document.getElementById('wallet');
+        const checkBtn = document.getElementById('checkBtn');
+        const proofBtn = document.getElementById('proofBtn');
+        const lookupError = document.getElementById('lookupError');
+        const scoreCard = document.getElementById('scoreCard');
+        const refreshTiersBtn = document.getElementById('refreshTiersBtn');
+        const tiersError = document.getElementById('tiersError');
+        const tiersContent = document.getElementById('tiersContent');
+        const tiersPlaceholder = document.getElementById('tiersPlaceholder');
+        const refreshFlaggedBtn = document.getElementById('refreshFlaggedBtn');
+        const flaggedError = document.getElementById('flaggedError');
+        const flaggedContent = document.getElementById('flaggedContent');
+        const flaggedPlaceholder = document.getElementById('flaggedPlaceholder');
+
+        const API_KEY_STORAGE = 'trustapi_dashboard_api_key';
+        apiKeyInput.value = localStorage.getItem(API_KEY_STORAGE) || '';
+
+        const panelLoaders = {
+            tiers: () => loadPanel({
+                path: '/internal/tier_stats',
+                button: refreshTiersBtn,
+                errorEl: tiersError,
+                contentEl: tiersContent,
+                placeholderEl: tiersPlaceholder,
+                fallbackError: 'Failed to load tier stats',
+                render: renderTier
+            }),
+            flagged: () => loadPanel({
+                path: '/internal/flagged_wallets',
+                button: refreshFlaggedBtn,
+                errorEl: flaggedError,
+                contentEl: flaggedContent,
+                placeholderEl: flaggedPlaceholder,
+                fallbackError: 'Failed to load flagged wallets',
+                render: renderFlagged
+            })
+        };
+
+        tabs.forEach((tab) => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                tabs.forEach((item) => item.classList.toggle('active', item === tab));
+                panels.forEach((panel) => panel.classList.toggle('active', panel.id === target));
+
+                const loader = panelLoaders[target];
+                const contentEl = target === 'tiers'
+                    ? tiersContent
+                    : target === 'flagged'
+                        ? flaggedContent
+                        : null;
+
+                if (loader && contentEl && !contentEl.dataset.loaded) {
+                    loader();
+                }
+            });
+        });
+
+        function renderBar(tier, count, total) {
+            const pct = total === 0 ? 0 : Math.round((count / total) * 100);
+
+            return `
+                <div class="bar-row">
+                    <span class="tier ${tier}">${tier}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill ${tier}" style="width: ${pct}%"></div>
+                    </div>
+                    <strong>${count}</strong>
+                </div>
+            `;
+        }
+
+        function renderTier(data) {
+            const tiers = data.tiers || {};
+            const total = data.total || 0;
+
+            return [
+                renderBar('gold', tiers.gold || 0, total),
+                renderBar('silver', tiers.silver || 0, total),
+                renderBar('bronze', tiers.bronze || 0, total),
+                `<p class="stats-meta">Total wallets with features: ${total}</p>`
+            ].join('');
+        }
+
+        function renderFlagged(data) {
+            const wallets = data.wallets || [];
+
+            if (wallets.length === 0) {
+                return '<p class="stats-meta">No bronze (flagged) wallets found.</p>';
+            }
+
+            const rows = wallets.map((item) => {
+                const tier = item.trust_tier || 'bronze';
+
+                return `
+                    <tr>
+                        <td>${item.wallet}</td>
+                        <td><span class="tier ${tier}">${tier}</span></td>
+                        <td>${item.trust_score}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            return `
+                <table class="wallet-table">
+                    <thead>
+                        <tr>
+                            <th>Wallet</th>
+                            <th>Tier</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <p class="stats-meta">Flagged wallets: ${data.total || 0}</p>
+            `;
+        }
+
+        async function loadPanel({ path, button, errorEl, contentEl, placeholderEl, fallbackError, render }) {
+            errorEl.hidden = true;
+            button.disabled = true;
+            button.textContent = 'Loading...';
+
+            try {
+                const response = await fetch(path);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || fallbackError);
+                }
+
+                placeholderEl.hidden = true;
+                contentEl.innerHTML = render(data);
+                contentEl.dataset.loaded = 'true';
+            } catch (error) {
+                errorEl.textContent = error.message;
+                errorEl.hidden = false;
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Refresh';
+            }
+        }
+
+        refreshTiersBtn.addEventListener('click', () => {
+            delete tiersContent.dataset.loaded;
+            panelLoaders.tiers();
+        });
+
+        refreshFlaggedBtn.addEventListener('click', () => {
+            delete flaggedContent.dataset.loaded;
+            panelLoaders.flagged();
+        });
+
+        function row(label, valueHtml) {
+            return `<div class="score-row"><span class="label">${label}</span><span class="value">${valueHtml}</span></div>`;
+        }
+
+        function renderCheckResult(data) {
+            const tier = data.trust_tier || 'bronze';
+            const features = data.features || {};
+
+            scoreCard.innerHTML = [
+                row('Wallet', data.wallet),
+                row('Trust score', data.trust_score),
+                row('Tier', `<span class="tier ${tier}">${tier}</span>`),
+                row('Human likelihood', data.human_likelihood),
+                row('Confidence', data.confidence),
+                row('Wallet age (days)', features.wallet_age_days ?? '—'),
+                row('Activity frequency', features.activity_frequency ?? '—'),
+                row('Burst score', features.burst_score ?? '—')
+            ].join('');
+            scoreCard.classList.remove('hidden');
+        }
+
+        function renderProofResult(data) {
+            const tier = data.trust_tier || 'bronze';
+            const features = data.features || {};
+
+            scoreCard.innerHTML = [
+                row('Proof ID', data.proof_id),
+                row('Wallet', data.wallet),
+                row('Trust score', data.trust_score),
+                row('Tier', `<span class="tier ${tier}">${tier}</span>`),
+                row('Human likelihood', data.human_likelihood),
+                row('Confidence', data.confidence),
+                row('Wallet age (days)', features.wallet_age_days ?? '—'),
+                row('Activity frequency', features.activity_frequency ?? '—'),
+                row('Burst score', features.burst_score ?? '—'),
+                row('Issued at', data.issued_at),
+                row('Expires at', data.expires_at)
+            ].join('');
+            scoreCard.classList.remove('hidden');
+        }
+
+        async function callApi(path) {
+            const apiKey = apiKeyInput.value.trim();
+            const wallet = walletInput.value.trim();
+
+            lookupError.hidden = true;
+            scoreCard.classList.add('hidden');
+
+            if (!apiKey) {
+                throw new Error('API key is required');
+            }
+
+            if (!wallet) {
+                throw new Error('Wallet address is required');
+            }
+
+            localStorage.setItem(API_KEY_STORAGE, apiKey);
+
+            const response = await fetch(path, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-Key': apiKey
+                },
+                body: JSON.stringify({ wallet })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Request failed');
+            }
+
+            return data;
+        }
+
+        async function runLookup(path, renderFn, button, loadingText, defaultText) {
+            checkBtn.disabled = true;
+            proofBtn.disabled = true;
+            button.textContent = loadingText;
+
+            try {
+                const data = await callApi(path);
+                renderFn(data);
+            } catch (error) {
+                lookupError.textContent = error.message;
+                lookupError.hidden = false;
+            } finally {
+                button.textContent = defaultText;
+                checkBtn.disabled = false;
+                proofBtn.disabled = false;
+            }
+        }
+
+        checkBtn.addEventListener('click', () => {
+            runLookup('/check_wallet', renderCheckResult, checkBtn, 'Checking...', 'Check wallet');
+        });
+
+        proofBtn.addEventListener('click', () => {
+            runLookup('/generate_proof', renderProofResult, proofBtn, 'Generating...', 'Generate proof');
+        });
+    </script>
+</body>
+</html>
