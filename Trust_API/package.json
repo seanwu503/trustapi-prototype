@@ -8,7 +8,9 @@
     "dev": "node --watch server.js",
     "db:schema": "node db/apply-schema.js",
     "score": "node scoringService.js",
-    "delete-wallet": "node delete-wallet.js"
+    "delete-wallet": "node delete-wallet.js",
+    "simulate": "node scripts/simulate-dev-usage.js"
+
   },
   "license": "ISC",
   "type": "commonjs",
