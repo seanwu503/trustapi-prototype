@@ -26,7 +26,7 @@ function normalizeWallet(wallet) {
         throw createError(400, 'invalid wallet address', 'INVALID_WALLET');
     }
 
-    return value;
+    return value.toLowerCase();
 }
 
 function parseHexInt(hexValue) {
