@@ -5,6 +5,10 @@ const TRANSFER_WINDOW_DAYS = 30;
 const SECONDS_PER_BLOCK = 12;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+// external = plain ETH, erc20 = fungible tokens, erc721/erc1155 = NFTs.
+// `internal` (contract-moved ETH) is intentionally excluded for now.
+const TRANSFER_CATEGORIES = ['external', 'erc20', 'erc721', 'erc1155'];
+
 const WALLET_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 
 function getApiKey() {
@@ -107,15 +111,26 @@ function toUtcDateKey(unixSeconds) {
     return new Date(unixSeconds * 1000).toISOString().slice(0, 10);
 }
 
-async function addTransferToDailyCounts(dailyCounts, transfer, blockTimestampCache) {
+async function normalizeTransfer(transfer, direction, blockTimestampCache) {
     const timestamp = await getTransferTimestamp(transfer, blockTimestampCache);
+    const contractAddress = transfer.rawContract && transfer.rawContract.address
+        ? transfer.rawContract.address
+        : null;
+    const counterparty = direction === 'out' ? transfer.to : transfer.from;
 
-    if (timestamp === null) {
-        return;
-    }
-
-    const day = toUtcDateKey(timestamp);
-    dailyCounts[day] = (dailyCounts[day] || 0) + 1;
+    return {
+        direction,
+        category: transfer.category || null,
+        counterparty: counterparty || null,
+        contract_address: contractAddress,
+        tx_hash: transfer.hash || null,
+        unique_id: transfer.uniqueId || null,
+        value: transfer.value === undefined || transfer.value === null ? null : transfer.value,
+        block_number: transfer.blockNum ? parseHexInt(transfer.blockNum) : null,
+        occurred_at: timestamp === null ? null : new Date(timestamp * 1000).toISOString(),
+        // Internal-only: used to build daily counts; stripped before returning.
+        timestamp
+    };
 }
 
 async function callRpc(method, params) {
@@ -186,8 +201,9 @@ async function getFromBlockHex30DaysAgo() {
     return '0x' + fromBlock.toString(16);
 }
 
-async function collectDailyTransferCounts(filter, fromBlock, blockTimestampCache) {
+async function collectTransfers(filter, direction, fromBlock, blockTimestampCache) {
     const dailyCounts = {};
+    const transfers = [];
     let total = 0;
     let pageKey;
 
@@ -195,7 +211,7 @@ async function collectDailyTransferCounts(filter, fromBlock, blockTimestampCache
         const params = {
             fromBlock,
             toBlock: 'latest',
-            category: ['external', 'erc20'],
+            category: TRANSFER_CATEGORIES,
             maxCount: '0x3e8',
             ...filter
         };
@@ -205,17 +221,24 @@ async function collectDailyTransferCounts(filter, fromBlock, blockTimestampCache
         }
 
         const result = await callRpc('alchemy_getAssetTransfers', [params]);
-        const transfers = result && Array.isArray(result.transfers) ? result.transfers : [];
+        const pageTransfers = result && Array.isArray(result.transfers) ? result.transfers : [];
 
-        for (const transfer of transfers) {
-            await addTransferToDailyCounts(dailyCounts, transfer, blockTimestampCache);
+        for (const transfer of pageTransfers) {
+            const { timestamp, ...row } = await normalizeTransfer(transfer, direction, blockTimestampCache);
+
+            if (timestamp !== null) {
+                const day = toUtcDateKey(timestamp);
+                dailyCounts[day] = (dailyCounts[day] || 0) + 1;
+            }
+
+            transfers.push(row);
             total += 1;
         }
 
         pageKey = result && result.pageKey;
     } while (pageKey);
 
-    return { dailyCounts, total };
+    return { dailyCounts, total, transfers };
 }
 
 async function getEarliestTransferTimestamp(wallet, direction, blockTimestampCache) {
@@ -226,7 +249,7 @@ async function getEarliestTransferTimestamp(wallet, direction, blockTimestampCac
     const result = await callRpc('alchemy_getAssetTransfers', [{
         fromBlock: '0x0',
         toBlock: 'latest',
-        category: ['external', 'erc20'],
+        category: TRANSFER_CATEGORIES,
         maxCount: '0x1',
         order: 'asc',
         ...filter
@@ -271,8 +294,8 @@ async function getWalletInfo(walletInput) {
     const transaction_count = await getTransactionCount(wallet);
     const balance_eth = await getBalanceEth(wallet);
     const { wallet_age_days, first_activity_at } = await getWalletAge(wallet, blockTimestampCache);
-    const outgoing = await collectDailyTransferCounts({ fromAddress: wallet }, fromBlock, blockTimestampCache);
-    const incoming = await collectDailyTransferCounts({ toAddress: wallet }, fromBlock, blockTimestampCache);
+    const outgoing = await collectTransfers({ fromAddress: wallet }, 'out', fromBlock, blockTimestampCache);
+    const incoming = await collectTransfers({ toAddress: wallet }, 'in', fromBlock, blockTimestampCache);
 
     return {
         wallet,
@@ -287,7 +310,8 @@ async function getWalletInfo(walletInput) {
         daily_transfer_counts: {
             out: outgoing.dailyCounts,
             in: incoming.dailyCounts
-        }
+        },
+        transfers: [...outgoing.transfers, ...incoming.transfers]
     };
 }
 

@@ -1,4 +1,5 @@
 const { isDatabaseConfigured, query, getPool } = require('./client');
+const { saveWalletTransfers } = require('./transferRepository');
 
 async function saveWalletSnapshot(walletInfo) {
     const walletResult = await query(
@@ -43,9 +44,13 @@ async function saveWalletSnapshot(walletInfo) {
         ]
     );
 
+    const snapshotId = snapshotResult.rows[0].id;
+    const transfersResult = await saveWalletTransfers(walletId, snapshotId, walletInfo.transfers);
+
     return {
         wallet_id: walletId,
-        snapshot_id: snapshotResult.rows[0].id
+        snapshot_id: snapshotId,
+        transfers_saved: transfersResult.inserted
     };
 }
 
@@ -57,7 +62,7 @@ async function trySaveWalletSnapshot(walletInfo) {
 
     try {
         const saved = await saveWalletSnapshot(walletInfo);
-        return { saved: true, snapshot_id: saved.snapshot_id };
+        return { saved: true, snapshot_id: saved.snapshot_id, transfers_saved: saved.transfers_saved };
     } catch (error) {
         console.error('Failed to save wallet snapshot:', error.message);
         return { saved: false };
@@ -103,6 +108,14 @@ async function deleteWalletByAddress(address, chain = 'ethereum') {
             [wallet.id]
         );
 
+        const transfersResult = await client.query(
+            `
+            delete from wallet_transfers
+            where wallet_id = $1
+            `,
+            [wallet.id]
+        );
+
         await client.query(
             `
             delete from wallets
@@ -118,7 +131,8 @@ async function deleteWalletByAddress(address, chain = 'ethereum') {
             address: wallet.address,
             chain: wallet.chain,
             features_deleted: featuresResult.rowCount,
-            snapshots_deleted: snapshotsResult.rowCount
+            snapshots_deleted: snapshotsResult.rowCount,
+            transfers_deleted: transfersResult.rowCount
         };
     } catch (error) {
         await client.query('ROLLBACK');
