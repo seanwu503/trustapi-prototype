@@ -37,6 +37,38 @@ create table if not exists wallet_features (
 create index if not exists wallet_features_wallet_id_idx
     on wallet_features (wallet_id, computed_at desc);
 
+create table if not exists wallet_transfers (
+    id                serial primary key,
+    wallet_id         integer not null references wallets(id) on delete cascade,
+    snapshot_id       integer references wallet_snapshots(id) on delete set null,
+    direction         text not null,
+    category          text not null,
+    counterparty      text,
+    contract_address  text,
+    tx_hash           text,
+    unique_id         text,
+    value             numeric,
+    method_id         text,
+    is_error          boolean,
+    block_number      bigint,
+    occurred_at       timestamptz,
+    source            text not null default 'alchemy',
+    created_at        timestamptz not null default now()
+);
+
+create index if not exists wallet_transfers_wallet_id_idx
+    on wallet_transfers (wallet_id, occurred_at desc);
+
+create index if not exists wallet_transfers_snapshot_id_idx
+    on wallet_transfers (snapshot_id);
+
+-- Prevent duplicate rows when the same wallet is re-fetched.
+-- Alchemy's uniqueId encodes tx hash + log index + category; direction is
+-- tracked separately because a transfer can appear in both in/out queries.
+create unique index if not exists wallet_transfers_dedupe_idx
+    on wallet_transfers (wallet_id, direction, unique_id)
+    where unique_id is not null;
+
 -- Safe to re-run on existing databases
 alter table wallet_snapshots add column if not exists wallet_age_days integer;
 alter table wallet_snapshots add column if not exists first_activity_at timestamptz;

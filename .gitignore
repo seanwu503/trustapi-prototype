@@ -4,6 +4,7 @@ Trust_API/node_modules/
 # Environment
 .env
 .env.local
+.claude
 
 # macOS
 .DS_Store
