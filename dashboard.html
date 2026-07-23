@@ -269,6 +269,16 @@
             font-size: 12px;
             word-break: break-all;
         }
+
+        .flag-tag {
+            display: inline-block;
+            margin: 0 6px 6px 0;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -323,7 +333,7 @@
 
         <section class="panel" id="flagged">
             <h2>Flagged wallets</h2>
-            <p>Wallets with trust tier <strong>bronze</strong> (latest features per wallet).</p>
+            <p>Wallets with any risk flag: high burst, short lifespan, or contract loop.</p>
 
             <div class="actions">
                 <button id="refreshFlaggedBtn" class="primary" type="button">Refresh</button>
@@ -422,11 +432,19 @@
             ].join('');
         }
 
+        function renderFlagTags(flags) {
+            if (!flags || flags.length === 0) {
+                return '—';
+            }
+
+            return flags.map((flag) => `<span class="flag-tag">${flag}</span>`).join('');
+        }
+
         function renderFlagged(data) {
             const wallets = data.wallets || [];
 
             if (wallets.length === 0) {
-                return '<p class="stats-meta">No bronze (flagged) wallets found.</p>';
+                return '<p class="stats-meta">No flagged wallets found.</p>';
             }
 
             const rows = wallets.map((item) => {
@@ -437,6 +455,7 @@
                         <td>${item.wallet}</td>
                         <td><span class="tier ${tier}">${tier}</span></td>
                         <td>${item.trust_score}</td>
+                        <td>${renderFlagTags(item.risk_flags)}</td>
                     </tr>
                 `;
             }).join('');
@@ -448,6 +467,7 @@
                             <th>Wallet</th>
                             <th>Tier</th>
                             <th>Score</th>
+                            <th>Risk flags</th>
                         </tr>
                     </thead>
                     <tbody>${rows}</tbody>
@@ -505,9 +525,15 @@
                 row('Tier', `<span class="tier ${tier}">${tier}</span>`),
                 row('Human likelihood', data.human_likelihood),
                 row('Confidence', data.confidence),
+                row('Risk flags', renderFlagTags(data.risk_flags)),
                 row('Wallet age (days)', features.wallet_age_days ?? '—'),
                 row('Activity frequency', features.activity_frequency ?? '—'),
-                row('Burst score', features.burst_score ?? '—')
+                row('Burst score', features.burst_score ?? '—'),
+                row('Transaction diversity', features.transaction_diversity ?? '—'),
+                row('Contract interaction ratio', features.contract_interaction_ratio ?? '—'),
+                row('Transaction entropy', features.transaction_entropy ?? '—'),
+                row('NFT transfers', features.nft_transfer_count ?? '—'),
+                row('NFT activity ratio', features.nft_activity_ratio ?? '—')
             ].join('');
             scoreCard.classList.remove('hidden');
         }
@@ -523,9 +549,15 @@
                 row('Tier', `<span class="tier ${tier}">${tier}</span>`),
                 row('Human likelihood', data.human_likelihood),
                 row('Confidence', data.confidence),
+                row('Risk flags', renderFlagTags(data.risk_flags)),
                 row('Wallet age (days)', features.wallet_age_days ?? '—'),
                 row('Activity frequency', features.activity_frequency ?? '—'),
                 row('Burst score', features.burst_score ?? '—'),
+                row('Transaction diversity', features.transaction_diversity ?? '—'),
+                row('Contract interaction ratio', features.contract_interaction_ratio ?? '—'),
+                row('Transaction entropy', features.transaction_entropy ?? '—'),
+                row('NFT transfers', features.nft_transfer_count ?? '—'),
+                row('NFT activity ratio', features.nft_activity_ratio ?? '—'),
                 row('Issued at', data.issued_at),
                 row('Expires at', data.expires_at)
             ].join('');

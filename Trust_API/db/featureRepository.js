@@ -2,6 +2,7 @@ const { isDatabaseConfigured, query } = require('./client');
 const { extractFeaturesFromSnapshot } = require('../featurePipeline');
 const { getWalletInfo } = require('../alchemyClient');
 const { saveWalletSnapshot } = require('./walletRepository');
+const { getTransfersBySnapshotId } = require('./transferRepository');
 const { createError } = require('../middleware/errors');
 
 const FEATURE_SELECT = `
@@ -12,6 +13,11 @@ const FEATURE_SELECT = `
         wf.wallet_age_days,
         wf.activity_frequency,
         wf.burst_score,
+        wf.transaction_diversity,
+        wf.contract_interaction_ratio,
+        wf.transaction_entropy,
+        wf.nft_transfer_count,
+        wf.nft_activity_ratio,
         wf.computed_at as feature_computed_at,
         ws.fetched_at as snapshot_fetched_at,
         w.address as wallet
@@ -94,6 +100,11 @@ async function getLatestFeaturesForAllWallets() {
             wf.wallet_age_days,
             wf.activity_frequency,
             wf.burst_score,
+            wf.transaction_diversity,
+            wf.contract_interaction_ratio,
+            wf.transaction_entropy,
+            wf.nft_transfer_count,
+            wf.nft_activity_ratio,
             wf.computed_at as feature_computed_at,
             ws.fetched_at as snapshot_fetched_at,
             w.address as wallet
@@ -115,9 +126,14 @@ async function saveWalletFeatures(walletId, snapshotId, features) {
             snapshot_id,
             wallet_age_days,
             activity_frequency,
-            burst_score
+            burst_score,
+            transaction_diversity,
+            contract_interaction_ratio,
+            transaction_entropy,
+            nft_transfer_count,
+            nft_activity_ratio
         )
-        values ($1, $2, $3, $4, $5)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         returning id, computed_at
         `,
         [
@@ -125,7 +141,12 @@ async function saveWalletFeatures(walletId, snapshotId, features) {
             snapshotId,
             features.wallet_age_days,
             features.activity_frequency,
-            features.burst_score
+            features.burst_score,
+            features.transaction_diversity,
+            features.contract_interaction_ratio,
+            features.transaction_entropy,
+            features.nft_transfer_count,
+            features.nft_activity_ratio
         ]
     );
 
@@ -171,7 +192,8 @@ async function extractFeatures(wallet, refresh = false) {
     }
 
     const { wallet_id, snapshot } = await resolveSnapshot(wallet, refresh);
-    const features = extractFeaturesFromSnapshot(snapshot);
+    const transfers = await getTransfersBySnapshotId(snapshot.id);
+    const features = extractFeaturesFromSnapshot(snapshot, transfers);
     const saved = await saveWalletFeatures(wallet_id, snapshot.id, features);
 
     return {
@@ -183,6 +205,11 @@ async function extractFeatures(wallet, refresh = false) {
         wallet_age_days: features.wallet_age_days,
         activity_frequency: features.activity_frequency,
         burst_score: features.burst_score,
+        transaction_diversity: features.transaction_diversity,
+        contract_interaction_ratio: features.contract_interaction_ratio,
+        transaction_entropy: features.transaction_entropy,
+        nft_transfer_count: features.nft_transfer_count,
+        nft_activity_ratio: features.nft_activity_ratio,
         computed_at: saved.computed_at
     };
 }

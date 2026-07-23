@@ -70,6 +70,30 @@ async function saveWalletTransfers(walletId, snapshotId, transfers) {
     return { received: rows.length, inserted };
 }
 
+async function getTransfersBySnapshotId(snapshotId) {
+    const result = await query(
+        `
+        select
+            direction,
+            category,
+            counterparty,
+            contract_address,
+            tx_hash,
+            unique_id,
+            value,
+            block_number,
+            occurred_at,
+            source
+        from wallet_transfers
+        where snapshot_id = $1
+        `,
+        [snapshotId]
+    );
+
+    return result.rows;
+}
+
 module.exports = {
-    saveWalletTransfers
+    saveWalletTransfers,
+    getTransfersBySnapshotId
 };

@@ -8,6 +8,7 @@ function toCheckWalletResponse(scoreResult) {
         trust_tier: scoreResult.trust_tier,
         human_likelihood: scoreResult.human_likelihood,
         confidence: scoreResult.confidence,
+        risk_flags: scoreResult.risk_flags || [],
         features: scoreResult.features
     };
 }

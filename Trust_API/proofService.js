@@ -19,6 +19,7 @@ async function generateProof(wallet) {
         trust_tier: score.trust_tier,
         human_likelihood: score.human_likelihood,
         confidence: score.confidence,
+        risk_flags: score.risk_flags || [],
         features: score.features,
         issued_at: issuedAt.toISOString(),
         expires_at: expiresAt.toISOString()

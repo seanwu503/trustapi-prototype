@@ -16,7 +16,8 @@ async function scoreAllWallets() {
         return {
             wallet: feature.wallet,
             trust_score: score.trust_score,
-            trust_tier: score.trust_tier
+            trust_tier: score.trust_tier,
+            risk_flags: score.risk_flags
         };
     });
 }
@@ -41,7 +42,14 @@ async function getTierStats() {
 
 async function getFlaggedWallets() {
     const scored = await scoreAllWallets();
-    const wallets = scored.filter((item) => item.trust_tier === 'bronze');
+    const wallets = scored
+        .filter((item) => item.risk_flags.length > 0)
+        .map((item) => ({
+            wallet: item.wallet,
+            trust_score: item.trust_score,
+            trust_tier: item.trust_tier,
+            risk_flags: item.risk_flags
+        }));
 
     return {
         total: wallets.length,

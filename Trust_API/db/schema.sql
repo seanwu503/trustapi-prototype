@@ -25,13 +25,18 @@ create index if not exists wallet_snapshots_wallet_id_idx
     on wallet_snapshots (wallet_id, fetched_at desc);
 
 create table if not exists wallet_features (
-    id                  serial primary key,
-    wallet_id           integer not null references wallets(id) on delete cascade,
-    snapshot_id         integer not null references wallet_snapshots(id) on delete cascade,
-    wallet_age_days     integer,
-    activity_frequency  numeric not null,
-    burst_score         numeric not null,
-    computed_at         timestamptz not null default now()
+    id                          serial primary key,
+    wallet_id                   integer not null references wallets(id) on delete cascade,
+    snapshot_id                 integer not null references wallet_snapshots(id) on delete cascade,
+    wallet_age_days             integer,
+    activity_frequency          numeric not null,
+    burst_score                 numeric not null,
+    transaction_diversity       numeric not null default 0,
+    contract_interaction_ratio  numeric not null default 0,
+    transaction_entropy         numeric not null default 0,
+    nft_transfer_count          integer not null default 0,
+    nft_activity_ratio          numeric not null default 0,
+    computed_at                 timestamptz not null default now()
 );
 
 create index if not exists wallet_features_wallet_id_idx
@@ -73,3 +78,9 @@ create unique index if not exists wallet_transfers_dedupe_idx
 alter table wallet_snapshots add column if not exists wallet_age_days integer;
 alter table wallet_snapshots add column if not exists first_activity_at timestamptz;
 alter table wallet_snapshots add column if not exists daily_transfer_counts jsonb not null default '{"out":{},"in":{}}'::jsonb;
+
+alter table wallet_features add column if not exists transaction_diversity numeric not null default 0;
+alter table wallet_features add column if not exists contract_interaction_ratio numeric not null default 0;
+alter table wallet_features add column if not exists transaction_entropy numeric not null default 0;
+alter table wallet_features add column if not exists nft_transfer_count integer not null default 0;
+alter table wallet_features add column if not exists nft_activity_ratio numeric not null default 0;
