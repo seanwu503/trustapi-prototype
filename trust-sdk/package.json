@@ -1,0 +1,21 @@
+{
+  "name": "@trustapi/sdk",
+  "version": "1.0.0",
+  "description": "Developer SDK for TrustAPI wallet trust checks and proofs",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node examples/check-wallet.js"
+  },
+  "keywords": [
+    "trustapi",
+    "wallet",
+    "ethereum",
+    "sdk"
+  ],
+  "license": "ISC",
+  "engines": {
+    "node": ">=18"
+  }
+}
