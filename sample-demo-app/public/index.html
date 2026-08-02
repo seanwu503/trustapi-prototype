@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Booth — Buy Event Tickets</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --ink: #142033;
+            --muted: #5b6b7c;
+            --line: #d7e0ea;
+            --accent: #0f6e56;
+            --accent-dark: #0b5542;
+            --danger: #9f1239;
+            --danger-bg: #fff1f2;
+            --ok: #0f6e56;
+            --ok-bg: #ecfdf5;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background:
+                radial-gradient(circle at top left, #e7f3ff 0, transparent 40%),
+                linear-gradient(180deg, #eef3f8, var(--bg));
+            color: var(--ink);
+            min-height: 100vh;
+            padding: 32px 20px 48px;
+        }
+
+        .page {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .banner {
+            background: #102a43;
+            color: white;
+            border-radius: 18px;
+            padding: 28px 28px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 30px rgba(16, 42, 67, 0.18);
+        }
+
+        .banner-kicker {
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .banner h1 {
+            font-size: 34px;
+            line-height: 1.1;
+            margin-bottom: 10px;
+        }
+
+        .banner p {
+            font-size: 16px;
+            line-height: 1.5;
+            max-width: 38rem;
+            opacity: 0.92;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 18px;
+        }
+
+        .panel h2 {
+            font-size: 18px;
+            margin-bottom: 6px;
+        }
+
+        .panel .hint {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.45;
+        }
+
+        .ticket {
+            border: 1px dashed #9db0c3;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: grid;
+            gap: 8px;
+            background:
+                linear-gradient(90deg, #fff 0 12px, transparent 12px) left / 12px 100% no-repeat,
+                linear-gradient(90deg, transparent calc(100% - 12px), #fff calc(100% - 12px)) right / 12px 100% no-repeat,
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(157, 176, 195, 0.25) 10px,
+                    rgba(157, 176, 195, 0.25) 11px
+                );
+            background-color: #f8fbff;
+            cursor: pointer;
+        }
+
+        .ticket.selected {
+            border-color: var(--accent);
+            box-shadow: inset 0 0 0 1px var(--accent);
+            background-color: #f2fbf7;
+        }
+
+        .ticket-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .ticket h3 {
+            font-size: 18px;
+        }
+
+        .price {
+            font-weight: 700;
+            color: var(--accent-dark);
+            white-space: nowrap;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            margin: 12px 0 6px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font-size: 15px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 120px;
+            gap: 12px;
+        }
+
+        button {
+            margin-top: 16px;
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 16px;
+            background: var(--accent);
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover { background: var(--accent-dark); }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            display: none;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            line-height: 1.5;
+        }
+
+        .result.show { display: block; }
+        .result.ok {
+            background: var(--ok-bg);
+            color: var(--ok);
+            border: 1px solid #a7f3d0;
+        }
+        .result.bad {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #fecdd3;
+        }
+
+        .result strong { display: block; margin-bottom: 6px; font-size: 16px; }
+        .result code {
+            display: block;
+            margin-top: 10px;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            opacity: 0.9;
+        }
+
+        .footnote {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="banner">
+            <div class="banner-kicker">Online ticket booth</div>
+            <h1>Buy event tickets</h1>
+            <p>
+                Pick a show, pay with your digital wallet, and we’ll verify wallet trust
+                with TrustAPI before confirming your tickets.
+            </p>
+        </header>
+
+        <section class="panel">
+            <h2>1. Choose your tickets</h2>
+            <p class="hint">Select an event below. Each purchase is a general admission ticket.</p>
+            <div id="events"></div>
+        </section>
+
+        <section class="panel">
+            <h2>2. Checkout</h2>
+            <p class="hint">Enter the digital wallet that will pay for these tickets.</p>
+
+            <div class="row">
+                <div>
+                    <label for="wallet">Digital wallet address</label>
+                    <input
+                        id="wallet"
+                        type="text"
+                        placeholder="0x..."
+                        value="0xd8da6bf26964af9d7eed9e03e53415d37aa96045"
+                    >
+                </div>
+                <div>
+                    <label for="quantity">Tickets</label>
+                    <select id="quantity">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="buyBtn" type="button">Buy tickets with wallet</button>
+            <div id="result" class="result"></div>
+            <p class="footnote">
+                Demo only — no real payment is charged. Checkout calls the Trust SDK on the server
+                to decide if the wallet can be trusted.
+            </p>
+        </section>
+    </div>
+
+    <script>
+        let selectedEventId = null;
+        const eventsEl = document.getElementById('events');
+        const buyBtn = document.getElementById('buyBtn');
+        const resultEl = document.getElementById('result');
+
+        function money(eth) {
+            return `${eth} ETH / ticket`;
+        }
+
+        function renderEvents(events) {
+            eventsEl.innerHTML = events.map((event) => `
+                <article class="ticket" data-id="${event.id}">
+                    <div class="ticket-top">
+                        <h3>${event.name}</h3>
+                        <div class="price">${money(event.price_eth)}</div>
+                    </div>
+                    <div class="meta">${event.date}</div>
+                    <div class="meta">${event.venue} · ${event.description}</div>
+                </article>
+            `).join('');
+
+            const tickets = [...eventsEl.querySelectorAll('.ticket')];
+            tickets.forEach((ticket) => {
+                ticket.addEventListener('click', () => {
+                    tickets.forEach((item) => item.classList.remove('selected'));
+                    ticket.classList.add('selected');
+                    selectedEventId = ticket.dataset.id;
+                });
+            });
+
+            if (tickets[0]) {
+                tickets[0].click();
+            }
+        }
+
+        function showResult(ok, title, details) {
+            resultEl.className = `result show ${ok ? 'ok' : 'bad'}`;
+            resultEl.innerHTML = `<strong>${title}</strong>${details}`;
+        }
+
+        async function loadEvents() {
+            const response = await fetch('/api/events');
+            const data = await response.json();
+            renderEvents(data.events || []);
+        }
+
+        buyBtn.addEventListener('click', async () => {
+            resultEl.className = 'result';
+            buyBtn.disabled = true;
+            buyBtn.textContent = 'Checking wallet & buying tickets...';
+
+            try {
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        eventId: selectedEventId,
+                        wallet: document.getElementById('wallet').value.trim(),
+                        quantity: Number(document.getElementById('quantity').value)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.allowed) {
+                    showResult(
+                        false,
+                        'Tickets not sold — wallet blocked',
+                        `${data.reason || data.error || 'Checkout denied'}
+                        <code>${JSON.stringify(data.trust || data, null, 2)}</code>`
+                    );
+                    return;
+                }
+
+                showResult(
+                    true,
+                    'Tickets confirmed',
+                    `${data.message}<br>Order ${data.order_id} · ${data.quantity} ticket(s) to ${data.event.name} · ${data.total_eth} ETH
+                    <code>${JSON.stringify(data.trust, null, 2)}</code>`
+                );
+            } catch (error) {
+                showResult(false, 'Checkout failed', error.message);
+            } finally {
+                buyBtn.disabled = false;
+                buyBtn.textContent = 'Buy tickets with wallet';
+            }
+        });
+
+        loadEvents().catch((error) => {
+            eventsEl.innerHTML = `<p class="hint">Could not load tickets: ${error.message}</p>`;
+        });
+    </script>
+</body>
+</html>

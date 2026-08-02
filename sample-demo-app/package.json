@@ -1,0 +1,16 @@
+{
+  "name": "sample-demo-app",
+  "version": "1.0.0",
+  "description": "Sample ticket shop that checks wallet trust with @trustapi/sdk before checkout",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@trustapi/sdk": "file:../trust-sdk",
+    "express": "^5.2.1"
+  }
+}
